@@ -1,0 +1,88 @@
+{
+	"actions": [],
+	"creation": "2024-01-01 00:00:00.000000",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": [
+		"enabled",
+		"section_break_connection",
+		"taprnext_url",
+		"column_break_auth",
+		"api_key",
+		"api_secret",
+		"section_break_defaults",
+		"default_target_erp"
+	],
+	"fields": [
+		{
+			"default": "0",
+			"fieldname": "enabled",
+			"fieldtype": "Check",
+			"label": "Enabled"
+		},
+		{
+			"fieldname": "section_break_connection",
+			"fieldtype": "Section Break",
+			"label": "TAPRNext Connection"
+		},
+		{
+			"fieldname": "taprnext_url",
+			"fieldtype": "Data",
+			"label": "TAPRNext URL",
+			"mandatory_depends_on": "eval:doc.enabled",
+			"description": "e.g., https://yourcompany.gc.tapr.ch"
+		},
+		{
+			"fieldname": "column_break_auth",
+			"fieldtype": "Column Break"
+		},
+		{
+			"fieldname": "api_key",
+			"fieldtype": "Data",
+			"label": "API Key",
+			"mandatory_depends_on": "eval:doc.enabled"
+		},
+		{
+			"fieldname": "api_secret",
+			"fieldtype": "Password",
+			"label": "API Secret",
+			"mandatory_depends_on": "eval:doc.enabled"
+		},
+		{
+			"fieldname": "section_break_defaults",
+			"fieldtype": "Section Break",
+			"label": "Defaults"
+		},
+		{
+			"default": "erpnext",
+			"fieldname": "default_target_erp",
+			"fieldtype": "Select",
+			"label": "Target ERP",
+			"options": "erpnext\nd365\nsap_s4hana\nsap_b1\nnetsuite\noracle\nxero",
+			"description": "Target ERP system for the receiver"
+		}
+	],
+	"index_web_pages_for_search": 1,
+	"issingle": 1,
+	"links": [],
+	"modified": "2024-01-01 00:00:00.000000",
+	"modified_by": "Administrator",
+	"module": "Peppol 4 Erpnext",
+	"name": "PEPPOL Settings",
+	"owner": "Administrator",
+	"permissions": [
+		{
+			"create": 1,
+			"delete": 1,
+			"email": 1,
+			"print": 1,
+			"read": 1,
+			"role": "System Manager",
+			"share": 1,
+			"write": 1
+		}
+	],
+	"sort_field": "modified",
+	"sort_order": "DESC",
+	"states": []
+}

@@ -8,7 +8,7 @@ app_license = "mit"
 # Apps
 # ------------------
 
-# required_apps = []
+required_apps = ["erpnext"]
 
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
@@ -43,10 +43,34 @@ app_license = "mit"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {"Sales Invoice": "public/js/sales_invoice.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
+
+# Fixtures
+# --------
+fixtures = [
+	{
+		"doctype": "Custom Field",
+		"filters": [
+			["name", "in", [
+				"Company-peppol_section",
+				"Company-peppol_id",
+				"Company-peppol_scheme",
+				"Customer-peppol_section",
+				"Customer-peppol_id",
+				"Customer-peppol_scheme",
+				"Sales Invoice-peppol_section",
+				"Sales Invoice-peppol_status",
+				"Sales Invoice-peppol_document_name",
+				"Sales Invoice-peppol_column_break",
+				"Sales Invoice-peppol_sent_on",
+				"Sales Invoice-peppol_error",
+			]]
+		]
+	}
+]
 
 # Svg Icons
 # ------------------

@@ -1,0 +1,125 @@
+[
+	{
+		"doctype": "Custom Field",
+		"name": "Company-peppol_section",
+		"dt": "Company",
+		"fieldname": "peppol_section",
+		"fieldtype": "Section Break",
+		"label": "PEPPOL",
+		"insert_after": "default_currency"
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Company-peppol_id",
+		"dt": "Company",
+		"fieldname": "peppol_id",
+		"fieldtype": "Data",
+		"label": "PEPPOL Participant ID",
+		"insert_after": "peppol_section",
+		"description": "Your company's PEPPOL Participant ID (e.g., 9959:CHE123456789)"
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Company-peppol_scheme",
+		"dt": "Company",
+		"fieldname": "peppol_scheme",
+		"fieldtype": "Select",
+		"label": "PEPPOL ID Scheme",
+		"insert_after": "peppol_id",
+		"options": "\n0007:SE:ORGNR\n0088:EAN/GLN\n0106:NL:KVK\n0190:NL:OINO\n9914:PEPPOL\n9915:AT:VAT\n9959:CH:UID",
+		"description": "Scheme identifier for PEPPOL ID"
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Customer-peppol_section",
+		"dt": "Customer",
+		"fieldname": "peppol_section",
+		"fieldtype": "Section Break",
+		"label": "PEPPOL",
+		"insert_after": "tax_id"
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Customer-peppol_id",
+		"dt": "Customer",
+		"fieldname": "peppol_id",
+		"fieldtype": "Data",
+		"label": "PEPPOL Participant ID",
+		"insert_after": "peppol_section",
+		"description": "Customer's PEPPOL Participant ID for receiving e-invoices"
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Customer-peppol_scheme",
+		"dt": "Customer",
+		"fieldname": "peppol_scheme",
+		"fieldtype": "Select",
+		"label": "PEPPOL ID Scheme",
+		"insert_after": "peppol_id",
+		"options": "\n0007:SE:ORGNR\n0088:EAN/GLN\n0106:NL:KVK\n0190:NL:OINO\n9914:PEPPOL\n9915:AT:VAT\n9959:CH:UID",
+		"description": "Scheme identifier for PEPPOL ID"
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Sales Invoice-peppol_section",
+		"dt": "Sales Invoice",
+		"fieldname": "peppol_section",
+		"fieldtype": "Section Break",
+		"label": "PEPPOL",
+		"insert_after": "against_income_account",
+		"collapsible": 1
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Sales Invoice-peppol_status",
+		"dt": "Sales Invoice",
+		"fieldname": "peppol_status",
+		"fieldtype": "Select",
+		"label": "PEPPOL Status",
+		"insert_after": "peppol_section",
+		"options": "\nNot Sent\nSending\nSent\nDelivered\nFailed",
+		"read_only": 1,
+		"allow_on_submit": 1
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Sales Invoice-peppol_document_name",
+		"dt": "Sales Invoice",
+		"fieldname": "peppol_document_name",
+		"fieldtype": "Data",
+		"label": "TAPRNext Document",
+		"insert_after": "peppol_status",
+		"read_only": 1,
+		"allow_on_submit": 1
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Sales Invoice-peppol_column_break",
+		"dt": "Sales Invoice",
+		"fieldname": "peppol_column_break",
+		"fieldtype": "Column Break",
+		"insert_after": "peppol_document_name"
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Sales Invoice-peppol_sent_on",
+		"dt": "Sales Invoice",
+		"fieldname": "peppol_sent_on",
+		"fieldtype": "Datetime",
+		"label": "Sent On",
+		"insert_after": "peppol_column_break",
+		"read_only": 1,
+		"allow_on_submit": 1
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Sales Invoice-peppol_error",
+		"dt": "Sales Invoice",
+		"fieldname": "peppol_error",
+		"fieldtype": "Small Text",
+		"label": "Error Message",
+		"insert_after": "peppol_sent_on",
+		"read_only": 1,
+		"allow_on_submit": 1
+	}
+]
