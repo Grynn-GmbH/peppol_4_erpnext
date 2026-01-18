@@ -6,21 +6,24 @@ This is an ERPNext extension app that integrates with TAPRNext (a PEPPOL access 
 
 ## Architecture
 
+**Key Principle:** TAPRNext initiates all communication. The client ERPNext does not need to store TAPRNext credentials.
+
 ### Sending Sales Invoices (Outbound)
 
 ```
 ┌─────────────────────┐         ┌──────────────────────┐         ┌─────────────────┐
 │  Client ERPNext     │         │  TAPRNext            │         │  PEPPOL Network │
-│  + peppol_4_erpnext │ ──────► │  xxx.gc.tapr.ch      │ ──────► │  (Recipient)    │
-│                     │   API   │  (PEPPOL Access Pt)  │         │                 │
+│  + peppol_4_erpnext │ ◄────── │  xxx.gc.tapr.ch      │ ──────► │  (Recipient)    │
+│                     │  PULL   │  (PEPPOL Access Pt)  │         │                 │
 └─────────────────────┘         └──────────────────────┘         └─────────────────┘
 
 Flow:
 1. User submits Sales Invoice in ERPNext
-2. User clicks "Send to PEPPOL" button
-3. peppol_4_erpnext maps ERPNext Sales Invoice to TAPRNext format
-4. POST to TAPRNext API: /api/resource/Sales Invoice
+2. User checks "Send via PEPPOL" checkbox (or clicks "Mark for PEPPOL" button)
+3. Invoice status set to "Ready"
+4. TAPRNext batch job fetches invoices with send_via_peppol=1 and peppol_status="Ready"
 5. TAPRNext delivers via PEPPOL network to recipient
+6. TAPRNext updates invoice status and MLR response fields
 ```
 
 ### Receiving Purchase Invoices (Inbound)
@@ -28,22 +31,21 @@ Flow:
 ```
 ┌─────────────────┐         ┌──────────────────┐         ┌─────────────────────┐
 │  PEPPOL Network │ ──────► │  TAPRNext        │ ──────► │  Client ERPNext     │
-│  (Sender)       │         │  xxx.gc.tapr.ch  │  POST   │  + peppol_4_erpnext │
-└─────────────────┘         │                  │ ──────► │  API endpoint       │
-                            │  User approves   │         │                     │
-                            │  Batch job sends │         └─────────────────────┘
+│  (Sender)       │         │  xxx.gc.tapr.ch  │  PUSH   │  + peppol_4_erpnext │
+└─────────────────┘         │                  │ ──────► │                     │
+                            │  User approves   │         └─────────────────────┘
+                            │  Batch job sends │
                             └──────────────────┘
 
 Flow:
 1. TAPRNext receives Purchase Invoice from PEPPOL network
 2. User reviews and approves invoice in TAPRNext
-3. TAPRNext batch job sends approved invoice to client ERPNext
-4. peppol_4_erpnext receives POST request with invoice data
-5. peppol_4_erpnext maps TAPRNext format to ERPNext Purchase Invoice
-6. Purchase Invoice created in ERPNext (as Draft)
+3. TAPRNext batch job creates Purchase Invoice in client ERPNext
+4. TAPRNext calls POST /api/resource/Purchase Invoice with ERPNext native format
+5. Purchase Invoice created in ERPNext (as Draft)
 ```
 
-**Note:** TAPRNext pushes invoices to ERPNext - there is no polling. The client configures their ERPNext API credentials (api_key, api_secret) in TAPRNext.
+**Note:** TAPRNext stores the client ERPNext API credentials (api_key, api_secret) - not the other way around.
 
 ## TAPRNext API
 
@@ -51,56 +53,39 @@ TAPRNext is a Frappe-based application using standard Frappe REST API patterns.
 
 ### Authentication
 
+TAPRNext authenticates to client ERPNext using:
 ```
 Authorization: token api_key:api_secret
 ```
 
-### Endpoints Used
+### Endpoints Used by TAPRNext
 
-#### Sending Sales Invoices (Client → TAPRNext)
+#### Fetching Sales Invoices (TAPRNext pulls from Client)
 
 ```
-POST /api/resource/Sales Invoice
+GET /api/resource/Sales Invoice?filters=[["send_via_peppol","=",1],["peppol_status","=","Ready"]]
 ```
 
-#### Receiving Purchase Invoices (TAPRNext → Client)
+#### Updating Sales Invoice Status (TAPRNext updates Client)
 
-TAPRNext calls the standard ERPNext Purchase Invoice API directly:
+```
+PUT /api/resource/Sales Invoice/{name}
+{
+  "peppol_status": "Sent",
+  "peppol_document_name": "SINV-TAPR-00001",
+  "peppol_sent_on": "2024-01-15 10:30:00",
+  "peppol_mlr_status": "Accepted",
+  "peppol_mlr_description": "Message delivered successfully"
+}
+```
+
+#### Creating Purchase Invoices (TAPRNext pushes to Client)
 
 ```
 POST /api/resource/Purchase Invoice
 ```
 
-TAPRNext handles the mapping to ERPNext's native Purchase Invoice format. It also populates the PEPPOL tracking fields (`peppol_reference`, `peppol_sender_id`, `peppol_received_on`, `is_peppol_invoice`).
-
-### Invoice Payload Structure
-
-Both Sales Invoice and Purchase Invoice use the same structure (e-invoices are standardized):
-
-```json
-{
-  "legal_entity": "Company ABC",
-  "invoice_number": "INV-2024-001",
-  "invoice_date": "2024-01-15",
-  "due_date": "2024-02-15",
-  "vendor_name": "Acme Corp",
-  "vendor_vat_number": "DE123456789",
-  "currency": "EUR",
-  "net_total": 1000.00,
-  "tax_total": 190.00,
-  "grand_total": 1190.00,
-  "items": [
-    {
-      "item_description": "Widget A",
-      "quantity": 10,
-      "unit_price": 100.00,
-      "net_amount": 1000.00,
-      "tax_rate": 19,
-      "tax_amount": 190.00
-    }
-  ]
-}
-```
+TAPRNext sends the invoice in ERPNext's native Purchase Invoice format, including PEPPOL tracking fields.
 
 ## Components
 
@@ -108,17 +93,27 @@ Both Sales Invoice and Purchase Invoice use the same structure (e-invoices are s
 
 | DocType | Type | Purpose |
 |---------|------|---------|
-| PEPPOL Settings | Single | TAPRNext URL, API Key, API Secret, defaults |
+| PEPPOL Settings | Single | Enable/disable toggle and informational text |
 
 ### Custom Fields
 
 | DocType | Fields | Purpose |
 |---------|--------|---------|
-| Company | `peppol_id`, `peppol_scheme` | Sender PEPPOL ID |
-| Customer | `peppol_id`, `peppol_scheme` | Receiver PEPPOL ID (for Sales) |
-| Supplier | `peppol_id`, `peppol_scheme` | Sender PEPPOL ID (for Purchase) |
-| Sales Invoice | `peppol_status`, `peppol_document_name`, `peppol_sent_on`, `peppol_error` | Outbound tracking |
+| Company | `peppol_id`, `peppol_scheme` | Company's PEPPOL Participant ID (sender/receiver) |
+| Customer | `peppol_id`, `peppol_scheme` | Customer's PEPPOL Participant ID (for outbound invoices) |
+| Supplier | `peppol_id`, `peppol_scheme` | Supplier's PEPPOL Participant ID (for inbound invoices) |
+| Sales Invoice | `send_via_peppol`, `peppol_status`, `peppol_document_name`, `peppol_sent_on`, `peppol_error`, `peppol_mlr_status`, `peppol_mlr_description` | Outbound tracking |
 | Purchase Invoice | `peppol_reference`, `peppol_sender_id`, `peppol_received_on`, `is_peppol_invoice` | Inbound tracking |
+
+### Sales Invoice PEPPOL Status
+
+| Status | Description |
+|--------|-------------|
+| (empty) | Not marked for PEPPOL |
+| Ready | Marked for pickup by TAPRNext |
+| Sent | Picked up and sent via PEPPOL network |
+| Delivered | Confirmed delivered to recipient |
+| Failed | Delivery failed (see error message) |
 
 ### Key Files
 
@@ -126,14 +121,12 @@ Both Sales Invoice and Purchase Invoice use the same structure (e-invoices are s
 peppol_4_erpnext/
 ├── peppol_4_erpnext/
 │   ├── api.py                    # Whitelisted API endpoints
-│   ├── taprnext_client.py        # HTTP client for TAPRNext
-│   ├── invoice_mapper.py         # ERPNext ↔ TAPRNext mapping
 │   ├── doctype/
 │   │   └── peppol_settings/      # Settings configuration
 │   └── fixtures/
 │       └── custom_field.json     # Custom field definitions
 └── public/js/
-    └── sales_invoice.js          # "Send to PEPPOL" button
+    └── sales_invoice.js          # "Mark for PEPPOL" button & status display
 ```
 
 ## PEPPOL ID Schemes
@@ -149,6 +142,15 @@ Common scheme identifiers:
 | 9914:PEPPOL | PEPPOL Participant ID |
 | 9915:AT:VAT | Austrian VAT Number |
 | 9959:CH:UID | Swiss UID |
+
+## Message Level Response (MLR)
+
+The MLR fields on Sales Invoice track the AS4 network delivery status:
+
+- `peppol_mlr_status`: Status code from the AS4 network (e.g., "Accepted", "Rejected")
+- `peppol_mlr_description`: Detailed description of the delivery result
+
+These fields are populated by TAPRNext after attempting delivery via the PEPPOL network.
 
 ## Dependencies
 

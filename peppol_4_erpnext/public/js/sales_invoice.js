@@ -1,60 +1,89 @@
 frappe.ui.form.on("Sales Invoice", {
 	refresh: function (frm) {
-		// Only show button for submitted invoices
+		// Only for submitted invoices
 		if (frm.doc.docstatus !== 1) {
 			return;
 		}
 
-		// Check if invoice can be sent
-		frappe.call({
-			method: "peppol_4_erpnext.peppol_4_erpnext.api.can_send_to_peppol",
-			args: {
-				sales_invoice_name: frm.doc.name,
-			},
-			callback: function (r) {
-				if (r.message && r.message.can_send) {
-					frm.add_custom_button(
-						__("Send to PEPPOL"),
-						function () {
-							send_to_peppol(frm);
-						},
-						__("Actions")
-					);
-				}
-
-				// Add refresh status button if already sent
-				if (
-					frm.doc.peppol_status &&
-					frm.doc.peppol_status !== "Not Sent" &&
-					frm.doc.peppol_document_name
-				) {
-					frm.add_custom_button(
-						__("Refresh PEPPOL Status"),
-						function () {
-							refresh_peppol_status(frm);
-						},
-						__("Actions")
-					);
-				}
-			},
-		});
-
 		// Show PEPPOL status indicator
 		show_peppol_status_indicator(frm);
+
+		// Check if invoice can be marked for PEPPOL
+		if (!frm.doc.send_via_peppol) {
+			frappe.call({
+				method: "peppol_4_erpnext.peppol_4_erpnext.api.can_mark_for_peppol",
+				args: {
+					sales_invoice_name: frm.doc.name,
+				},
+				callback: function (r) {
+					if (r.message && r.message.can_mark) {
+						frm.add_custom_button(
+							__("Mark for PEPPOL"),
+							function () {
+								mark_for_peppol(frm);
+							},
+							__("Actions")
+						);
+					}
+				},
+			});
+		}
+	},
+
+	send_via_peppol: function (frm) {
+		// When checkbox is toggled, validate and set status
+		if (frm.doc.send_via_peppol && frm.doc.docstatus === 1) {
+			frappe.call({
+				method: "peppol_4_erpnext.peppol_4_erpnext.api.can_mark_for_peppol",
+				args: {
+					sales_invoice_name: frm.doc.name,
+				},
+				callback: function (r) {
+					if (r.message && !r.message.can_mark) {
+						frappe.msgprint({
+							title: __("Cannot Send via PEPPOL"),
+							message: r.message.issues.join("<br>"),
+							indicator: "red",
+						});
+						frm.set_value("send_via_peppol", 0);
+					} else if (r.message && r.message.can_mark) {
+						// Set status to Ready
+						frappe.call({
+							method: "peppol_4_erpnext.peppol_4_erpnext.api.mark_invoice_for_peppol",
+							args: {
+								sales_invoice_name: frm.doc.name,
+							},
+							callback: function (res) {
+								if (res.message && res.message.success) {
+									frappe.show_alert(
+										{
+											message: res.message.message,
+											indicator: "green",
+										},
+										5
+									);
+									frm.reload_doc();
+								}
+							},
+						});
+					}
+				},
+			});
+		}
 	},
 });
 
-function send_to_peppol(frm) {
+function mark_for_peppol(frm) {
 	frappe.confirm(
-		__("Send this invoice to {0} via PEPPOL?", [frm.doc.customer_name]),
+		__("Mark this invoice for PEPPOL sending to {0}?", [frm.doc.customer_name]),
 		function () {
 			frappe.call({
-				method: "peppol_4_erpnext.peppol_4_erpnext.api.send_sales_invoice_to_peppol",
+				method: "peppol_4_erpnext.peppol_4_erpnext.api.mark_invoice_for_peppol",
 				args: {
 					sales_invoice_name: frm.doc.name,
 				},
 				freeze: true,
-				freeze_message: __("Sending invoice to PEPPOL..."),
+				freeze_message: __("Marking invoice for PEPPOL..."),
 				callback: function (r) {
 					if (r.message) {
 						if (r.message.success) {
@@ -68,52 +97,20 @@ function send_to_peppol(frm) {
 							frm.reload_doc();
 						} else {
 							frappe.msgprint({
-								title: __("PEPPOL Error"),
+								title: __("Error"),
 								message: r.message.message,
 								indicator: "red",
 							});
-							frm.reload_doc();
 						}
 					}
-				},
-				error: function (r) {
-					frappe.msgprint({
-						title: __("Error"),
-						message: __("Failed to send invoice. Please try again."),
-						indicator: "red",
-					});
-					frm.reload_doc();
 				},
 			});
 		}
 	);
 }
 
-function refresh_peppol_status(frm) {
-	frappe.call({
-		method: "peppol_4_erpnext.peppol_4_erpnext.api.get_peppol_invoice_status",
-		args: {
-			sales_invoice_name: frm.doc.name,
-		},
-		freeze: true,
-		freeze_message: __("Checking PEPPOL status..."),
-		callback: function (r) {
-			if (r.message) {
-				frappe.show_alert(
-					{
-						message: __("Status: {0}", [r.message.status]),
-						indicator: get_status_indicator(r.message.status),
-					},
-					5
-				);
-				frm.reload_doc();
-			}
-		},
-	});
-}
-
 function show_peppol_status_indicator(frm) {
-	if (!frm.doc.peppol_status || frm.doc.peppol_status === "Not Sent") {
+	if (!frm.doc.send_via_peppol) {
 		return;
 	}
 
@@ -121,11 +118,11 @@ function show_peppol_status_indicator(frm) {
 	let message = "";
 
 	switch (frm.doc.peppol_status) {
-		case "Sending":
-			message = __("PEPPOL: Sending...");
+		case "Ready":
+			message = __("PEPPOL: Ready for pickup by TAPRNext");
 			break;
 		case "Sent":
-			message = __("PEPPOL: Sent to TAPRNext");
+			message = __("PEPPOL: Sent via PEPPOL network");
 			break;
 		case "Delivered":
 			message = __("PEPPOL: Delivered to recipient");
@@ -133,6 +130,8 @@ function show_peppol_status_indicator(frm) {
 		case "Failed":
 			message = __("PEPPOL: Failed - {0}", [frm.doc.peppol_error || "Unknown error"]);
 			break;
+		default:
+			message = __("PEPPOL: Marked for sending");
 	}
 
 	if (message) {
@@ -150,7 +149,7 @@ function show_peppol_status_indicator(frm) {
 
 function get_status_indicator(status) {
 	switch (status) {
-		case "Sending":
+		case "Ready":
 			return "orange";
 		case "Sent":
 			return "blue";

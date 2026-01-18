@@ -5,61 +5,26 @@
 	"engine": "InnoDB",
 	"field_order": [
 		"enabled",
-		"section_break_connection",
-		"taprnext_url",
-		"column_break_auth",
-		"api_key",
-		"api_secret",
-		"section_break_defaults",
-		"default_target_erp"
+		"section_break_info",
+		"info_html"
 	],
 	"fields": [
 		{
 			"default": "0",
 			"fieldname": "enabled",
 			"fieldtype": "Check",
-			"label": "Enabled"
+			"label": "Enable PEPPOL Integration",
+			"description": "Enable PEPPOL e-invoice sending and receiving for this site"
 		},
 		{
-			"fieldname": "section_break_connection",
+			"fieldname": "section_break_info",
 			"fieldtype": "Section Break",
-			"label": "TAPRNext Connection"
+			"label": "Information"
 		},
 		{
-			"fieldname": "taprnext_url",
-			"fieldtype": "Data",
-			"label": "TAPRNext URL",
-			"mandatory_depends_on": "eval:doc.enabled",
-			"description": "e.g., https://yourcompany.gc.tapr.ch"
-		},
-		{
-			"fieldname": "column_break_auth",
-			"fieldtype": "Column Break"
-		},
-		{
-			"fieldname": "api_key",
-			"fieldtype": "Data",
-			"label": "API Key",
-			"mandatory_depends_on": "eval:doc.enabled"
-		},
-		{
-			"fieldname": "api_secret",
-			"fieldtype": "Password",
-			"label": "API Secret",
-			"mandatory_depends_on": "eval:doc.enabled"
-		},
-		{
-			"fieldname": "section_break_defaults",
-			"fieldtype": "Section Break",
-			"label": "Defaults"
-		},
-		{
-			"default": "erpnext",
-			"fieldname": "default_target_erp",
-			"fieldtype": "Select",
-			"label": "Target ERP",
-			"options": "erpnext\nd365\nsap_s4hana\nsap_b1\nnetsuite\noracle\nxero",
-			"description": "Target ERP system for the receiver"
+			"fieldname": "info_html",
+			"fieldtype": "HTML",
+			"options": "<p class=\"text-muted\">This site is connected to TAPRNext for PEPPOL e-invoice exchange.</p><ul class=\"text-muted\"><li><strong>Sales Invoices:</strong> Mark invoices with 'Send via PEPPOL' checkbox. TAPRNext will fetch and deliver them.</li><li><strong>Purchase Invoices:</strong> TAPRNext will push approved invoices to this site automatically.</li></ul><p class=\"text-muted\">Ensure Company, Customer, and Supplier records have their PEPPOL Participant IDs configured.</p>"
 		}
 	],
 	"index_web_pages_for_search": 1,

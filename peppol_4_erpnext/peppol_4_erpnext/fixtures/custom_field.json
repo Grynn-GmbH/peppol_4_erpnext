@@ -61,6 +61,36 @@
 	},
 	{
 		"doctype": "Custom Field",
+		"name": "Supplier-peppol_section",
+		"dt": "Supplier",
+		"fieldname": "peppol_section",
+		"fieldtype": "Section Break",
+		"label": "PEPPOL",
+		"insert_after": "tax_id"
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Supplier-peppol_id",
+		"dt": "Supplier",
+		"fieldname": "peppol_id",
+		"fieldtype": "Data",
+		"label": "PEPPOL Participant ID",
+		"insert_after": "peppol_section",
+		"description": "Supplier's PEPPOL Participant ID for sending e-invoices"
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Supplier-peppol_scheme",
+		"dt": "Supplier",
+		"fieldname": "peppol_scheme",
+		"fieldtype": "Select",
+		"label": "PEPPOL ID Scheme",
+		"insert_after": "peppol_id",
+		"options": "\n0007:SE:ORGNR\n0088:EAN/GLN\n0106:NL:KVK\n0190:NL:OINO\n9914:PEPPOL\n9915:AT:VAT\n9959:CH:UID",
+		"description": "Scheme identifier for PEPPOL ID"
+	},
+	{
+		"doctype": "Custom Field",
 		"name": "Sales Invoice-peppol_section",
 		"dt": "Sales Invoice",
 		"fieldname": "peppol_section",
@@ -71,13 +101,24 @@
 	},
 	{
 		"doctype": "Custom Field",
+		"name": "Sales Invoice-send_via_peppol",
+		"dt": "Sales Invoice",
+		"fieldname": "send_via_peppol",
+		"fieldtype": "Check",
+		"label": "Send via PEPPOL",
+		"insert_after": "peppol_section",
+		"description": "Mark this invoice to be sent via PEPPOL network",
+		"allow_on_submit": 1
+	},
+	{
+		"doctype": "Custom Field",
 		"name": "Sales Invoice-peppol_status",
 		"dt": "Sales Invoice",
 		"fieldname": "peppol_status",
 		"fieldtype": "Select",
 		"label": "PEPPOL Status",
-		"insert_after": "peppol_section",
-		"options": "\nNot Sent\nSending\nSent\nDelivered\nFailed",
+		"insert_after": "send_via_peppol",
+		"options": "\nReady\nSent\nDelivered\nFailed",
 		"read_only": 1,
 		"allow_on_submit": 1
 	},
@@ -124,33 +165,38 @@
 	},
 	{
 		"doctype": "Custom Field",
-		"name": "Supplier-peppol_section",
-		"dt": "Supplier",
-		"fieldname": "peppol_section",
+		"name": "Sales Invoice-peppol_section_mlr",
+		"dt": "Sales Invoice",
+		"fieldname": "peppol_section_mlr",
 		"fieldtype": "Section Break",
-		"label": "PEPPOL",
-		"insert_after": "tax_id"
+		"label": "Message Level Response (MLR)",
+		"insert_after": "peppol_error",
+		"collapsible": 1,
+		"depends_on": "eval:doc.send_via_peppol"
 	},
 	{
 		"doctype": "Custom Field",
-		"name": "Supplier-peppol_id",
-		"dt": "Supplier",
-		"fieldname": "peppol_id",
+		"name": "Sales Invoice-peppol_mlr_status",
+		"dt": "Sales Invoice",
+		"fieldname": "peppol_mlr_status",
 		"fieldtype": "Data",
-		"label": "PEPPOL Participant ID",
-		"insert_after": "peppol_section",
-		"description": "Supplier's PEPPOL Participant ID for sending e-invoices"
+		"label": "MLR Status",
+		"insert_after": "peppol_section_mlr",
+		"read_only": 1,
+		"allow_on_submit": 1,
+		"description": "Message Level Response status from AS4 network"
 	},
 	{
 		"doctype": "Custom Field",
-		"name": "Supplier-peppol_scheme",
-		"dt": "Supplier",
-		"fieldname": "peppol_scheme",
-		"fieldtype": "Select",
-		"label": "PEPPOL ID Scheme",
-		"insert_after": "peppol_id",
-		"options": "\n0007:SE:ORGNR\n0088:EAN/GLN\n0106:NL:KVK\n0190:NL:OINO\n9914:PEPPOL\n9915:AT:VAT\n9959:CH:UID",
-		"description": "Scheme identifier for PEPPOL ID"
+		"name": "Sales Invoice-peppol_mlr_description",
+		"dt": "Sales Invoice",
+		"fieldname": "peppol_mlr_description",
+		"fieldtype": "Small Text",
+		"label": "MLR Description",
+		"insert_after": "peppol_mlr_status",
+		"read_only": 1,
+		"allow_on_submit": 1,
+		"description": "Detailed response from PEPPOL AS4 network"
 	},
 	{
 		"doctype": "Custom Field",
