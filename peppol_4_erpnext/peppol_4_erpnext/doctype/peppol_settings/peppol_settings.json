@@ -24,7 +24,7 @@
 		{
 			"fieldname": "info_html",
 			"fieldtype": "HTML",
-			"options": "<p class=\"text-muted\">This site is connected to PEPPOL e-invoice exchange via your Authorised Service Provider (ASP) Grynn GmbH's product TAPR.ch.</p><ul class=\"text-muted\"><li><strong>Sales Invoices:</strong> Mark invoices with 'Send via PEPPOL' checkbox. TAPR.ch will fetch and deliver them.</li><li><strong>Purchase Invoices:</strong> TAPR.ch will push approved invoices to this site automatically.</li></ul><p class=\"text-muted\">Ensure Company, Customer, and Supplier records have their PEPPOL Participant IDs configured.</p>"
+			"options": "<p class=\"text-muted\">This site is connected to PEPPOL e-invoice exchange via your Authorised Service Provider (ASP) Grynn GmbH's product TAPR.ch.</p><ul class=\"text-muted\"><li><strong>Sales Invoices:</strong> Mark invoices with 'Send via PEPPOL' checkbox. TAPR.ch will fetch and deliver them.</li><li><strong>Purchase Invoices:</strong> TAPR.ch will push approved invoices to this site automatically.</li></ul><p class=\"text-muted\">Your Company PEPPOL Participant ID should be registered via your site (see above). Your Customers and Suppliers have to provide their PEPPOL Participant ID. You cannot send/receive e-invoices via the exchange without each having a unique PEPPOL Participant ID.</p>"
 		}
 	],
 	"index_web_pages_for_search": 1,
