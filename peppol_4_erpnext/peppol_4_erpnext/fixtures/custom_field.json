@@ -121,5 +121,97 @@
 		"insert_after": "peppol_sent_on",
 		"read_only": 1,
 		"allow_on_submit": 1
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Supplier-peppol_section",
+		"dt": "Supplier",
+		"fieldname": "peppol_section",
+		"fieldtype": "Section Break",
+		"label": "PEPPOL",
+		"insert_after": "tax_id"
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Supplier-peppol_id",
+		"dt": "Supplier",
+		"fieldname": "peppol_id",
+		"fieldtype": "Data",
+		"label": "PEPPOL Participant ID",
+		"insert_after": "peppol_section",
+		"description": "Supplier's PEPPOL Participant ID for sending e-invoices"
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Supplier-peppol_scheme",
+		"dt": "Supplier",
+		"fieldname": "peppol_scheme",
+		"fieldtype": "Select",
+		"label": "PEPPOL ID Scheme",
+		"insert_after": "peppol_id",
+		"options": "\n0007:SE:ORGNR\n0088:EAN/GLN\n0106:NL:KVK\n0190:NL:OINO\n9914:PEPPOL\n9915:AT:VAT\n9959:CH:UID",
+		"description": "Scheme identifier for PEPPOL ID"
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Purchase Invoice-peppol_section",
+		"dt": "Purchase Invoice",
+		"fieldname": "peppol_section",
+		"fieldtype": "Section Break",
+		"label": "PEPPOL",
+		"insert_after": "against_expense_account",
+		"collapsible": 1
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Purchase Invoice-peppol_reference",
+		"dt": "Purchase Invoice",
+		"fieldname": "peppol_reference",
+		"fieldtype": "Data",
+		"label": "PEPPOL Reference",
+		"insert_after": "peppol_section",
+		"read_only": 1,
+		"description": "Original invoice reference from PEPPOL network"
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Purchase Invoice-peppol_sender_id",
+		"dt": "Purchase Invoice",
+		"fieldname": "peppol_sender_id",
+		"fieldtype": "Data",
+		"label": "Sender PEPPOL ID",
+		"insert_after": "peppol_reference",
+		"read_only": 1,
+		"description": "PEPPOL Participant ID of the sender"
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Purchase Invoice-peppol_column_break",
+		"dt": "Purchase Invoice",
+		"fieldname": "peppol_column_break",
+		"fieldtype": "Column Break",
+		"insert_after": "peppol_sender_id"
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Purchase Invoice-peppol_received_on",
+		"dt": "Purchase Invoice",
+		"fieldname": "peppol_received_on",
+		"fieldtype": "Datetime",
+		"label": "Received On",
+		"insert_after": "peppol_column_break",
+		"read_only": 1,
+		"description": "When the invoice was received via PEPPOL"
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Purchase Invoice-is_peppol_invoice",
+		"dt": "Purchase Invoice",
+		"fieldname": "is_peppol_invoice",
+		"fieldtype": "Check",
+		"label": "Is PEPPOL Invoice",
+		"insert_after": "peppol_received_on",
+		"read_only": 1,
+		"description": "Indicates this invoice was received via PEPPOL"
 	}
 ]

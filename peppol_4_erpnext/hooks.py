@@ -61,12 +61,21 @@ fixtures = [
 				"Customer-peppol_section",
 				"Customer-peppol_id",
 				"Customer-peppol_scheme",
+				"Supplier-peppol_section",
+				"Supplier-peppol_id",
+				"Supplier-peppol_scheme",
 				"Sales Invoice-peppol_section",
 				"Sales Invoice-peppol_status",
 				"Sales Invoice-peppol_document_name",
 				"Sales Invoice-peppol_column_break",
 				"Sales Invoice-peppol_sent_on",
 				"Sales Invoice-peppol_error",
+				"Purchase Invoice-peppol_section",
+				"Purchase Invoice-peppol_reference",
+				"Purchase Invoice-peppol_sender_id",
+				"Purchase Invoice-peppol_column_break",
+				"Purchase Invoice-peppol_received_on",
+				"Purchase Invoice-is_peppol_invoice",
 			]]
 		]
 	}
