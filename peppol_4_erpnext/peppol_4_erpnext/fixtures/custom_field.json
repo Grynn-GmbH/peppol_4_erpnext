@@ -26,7 +26,7 @@
 		"fieldtype": "Select",
 		"label": "PEPPOL ID Scheme",
 		"insert_after": "peppol_id",
-		"options": "\n0007:SE:ORGNR\n0088:EAN/GLN\n0106:NL:KVK\n0190:NL:OINO\n9914:PEPPOL\n9915:AT:VAT\n9959:CH:UID",
+		"options": "\n0007:SE:ORGNR\n0060:DUNS\n0088:EAN/GLN\n0106:NL:KVK\n0151:IN:GSTIN\n0190:NL:OINO\n0199:LEI\n9914:PEPPOL\n9915:AT:VAT\n9959:CH:UID",
 		"description": "Scheme identifier for PEPPOL ID"
 	},
 	{
@@ -56,7 +56,7 @@
 		"fieldtype": "Select",
 		"label": "PEPPOL ID Scheme",
 		"insert_after": "peppol_id",
-		"options": "\n0007:SE:ORGNR\n0088:EAN/GLN\n0106:NL:KVK\n0190:NL:OINO\n9914:PEPPOL\n9915:AT:VAT\n9959:CH:UID",
+		"options": "\n0007:SE:ORGNR\n0060:DUNS\n0088:EAN/GLN\n0106:NL:KVK\n0151:IN:GSTIN\n0190:NL:OINO\n0199:LEI\n9914:PEPPOL\n9915:AT:VAT\n9959:CH:UID",
 		"description": "Scheme identifier for PEPPOL ID"
 	},
 	{
@@ -86,7 +86,7 @@
 		"fieldtype": "Select",
 		"label": "PEPPOL ID Scheme",
 		"insert_after": "peppol_id",
-		"options": "\n0007:SE:ORGNR\n0088:EAN/GLN\n0106:NL:KVK\n0190:NL:OINO\n9914:PEPPOL\n9915:AT:VAT\n9959:CH:UID",
+		"options": "\n0007:SE:ORGNR\n0060:DUNS\n0088:EAN/GLN\n0106:NL:KVK\n0151:IN:GSTIN\n0190:NL:OINO\n0199:LEI\n9914:PEPPOL\n9915:AT:VAT\n9959:CH:UID",
 		"description": "Scheme identifier for PEPPOL ID"
 	},
 	{
