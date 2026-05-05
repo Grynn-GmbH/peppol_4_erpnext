@@ -57,13 +57,10 @@ fixtures = [
 			["name", "in", [
 				"Company-peppol_section",
 				"Company-peppol_id",
-				"Company-peppol_scheme",
 				"Customer-peppol_section",
 				"Customer-peppol_id",
-				"Customer-peppol_scheme",
 				"Supplier-peppol_section",
 				"Supplier-peppol_id",
-				"Supplier-peppol_scheme",
 				"Sales Invoice-peppol_section",
 				"Sales Invoice-send_via_peppol",
 				"Sales Invoice-peppol_status",

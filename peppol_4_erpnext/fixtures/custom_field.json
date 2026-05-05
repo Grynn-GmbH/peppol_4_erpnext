@@ -20,17 +20,6 @@
 	},
 	{
 		"doctype": "Custom Field",
-		"name": "Company-peppol_scheme",
-		"dt": "Company",
-		"fieldname": "peppol_scheme",
-		"fieldtype": "Select",
-		"label": "PEPPOL ID Scheme",
-		"insert_after": "peppol_id",
-		"options": "\n0007:SE:ORGNR\n0060:DUNS\n0088:EAN/GLN\n0106:NL:KVK\n0151:IN:GSTIN\n0190:NL:OINO\n0199:LEI\n9914:PEPPOL\n9915:AT:VAT\n9959:CH:UID",
-		"description": "Scheme identifier for PEPPOL ID"
-	},
-	{
-		"doctype": "Custom Field",
 		"name": "Customer-peppol_section",
 		"dt": "Customer",
 		"fieldname": "peppol_section",
@@ -50,17 +39,6 @@
 	},
 	{
 		"doctype": "Custom Field",
-		"name": "Customer-peppol_scheme",
-		"dt": "Customer",
-		"fieldname": "peppol_scheme",
-		"fieldtype": "Select",
-		"label": "PEPPOL ID Scheme",
-		"insert_after": "peppol_id",
-		"options": "\n0007:SE:ORGNR\n0060:DUNS\n0088:EAN/GLN\n0106:NL:KVK\n0151:IN:GSTIN\n0190:NL:OINO\n0199:LEI\n9914:PEPPOL\n9915:AT:VAT\n9959:CH:UID",
-		"description": "Scheme identifier for PEPPOL ID"
-	},
-	{
-		"doctype": "Custom Field",
 		"name": "Supplier-peppol_section",
 		"dt": "Supplier",
 		"fieldname": "peppol_section",
@@ -77,17 +55,6 @@
 		"label": "PEPPOL Participant ID",
 		"insert_after": "peppol_section",
 		"description": "Supplier's PEPPOL Participant ID for sending e-invoices"
-	},
-	{
-		"doctype": "Custom Field",
-		"name": "Supplier-peppol_scheme",
-		"dt": "Supplier",
-		"fieldname": "peppol_scheme",
-		"fieldtype": "Select",
-		"label": "PEPPOL ID Scheme",
-		"insert_after": "peppol_id",
-		"options": "\n0007:SE:ORGNR\n0060:DUNS\n0088:EAN/GLN\n0106:NL:KVK\n0151:IN:GSTIN\n0190:NL:OINO\n0199:LEI\n9914:PEPPOL\n9915:AT:VAT\n9959:CH:UID",
-		"description": "Scheme identifier for PEPPOL ID"
 	},
 	{
 		"doctype": "Custom Field",
