@@ -155,7 +155,7 @@ function get_status_indicator(status) {
 		case "Ready":
 			return "orange";
 		case "Fetched":
-			return "blue";
+			return "yellow";
 		case "Sent":
 			return "blue";
 		case "Delivered":

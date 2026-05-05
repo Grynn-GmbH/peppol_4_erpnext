@@ -124,6 +124,10 @@ def update_peppol_status(
 			)
 		)
 
+	docstatus = frappe.db.get_value("Sales Invoice", sales_invoice_name, "docstatus")
+	if docstatus != 1:
+		frappe.throw(_("Cannot update PEPPOL status on an unsubmitted or cancelled invoice"))
+
 	updates = {"peppol_status": status}
 	if document_name is not None:
 		updates["peppol_document_name"] = document_name
