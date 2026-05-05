@@ -121,6 +121,9 @@ function show_peppol_status_indicator(frm) {
 		case "Ready":
 			message = __("PEPPOL: Ready for pickup by TAPRNext");
 			break;
+		case "Fetched":
+			message = __("PEPPOL: Fetched by TAPRNext — processing");
+			break;
 		case "Sent":
 			message = __("PEPPOL: Sent via PEPPOL network");
 			break;
@@ -151,6 +154,8 @@ function get_status_indicator(status) {
 	switch (status) {
 		case "Ready":
 			return "orange";
+		case "Fetched":
+			return "yellow";
 		case "Sent":
 			return "blue";
 		case "Delivered":

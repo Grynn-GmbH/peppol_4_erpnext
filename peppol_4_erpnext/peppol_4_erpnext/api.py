@@ -93,6 +93,60 @@ def mark_invoice_for_peppol(sales_invoice_name):
 
 
 @frappe.whitelist()
+def update_peppol_status(
+	sales_invoice_name,
+	status,
+	document_name=None,
+	sent_on=None,
+	error=None,
+	mlr_status=None,
+	mlr_description=None,
+):
+	"""Update peppol_status on a Sales Invoice. Called by tapr_next after fetch/send/MLR events.
+
+	Args:
+	    sales_invoice_name: ERPNext Sales Invoice name
+	    status: One of Fetched, Sent, Delivered, Failed
+	    document_name: tapr_next Sales Invoice name (set on Fetched)
+	    sent_on: Datetime when invoice was sent via PEPPOL
+	    error: Error message if status is Failed
+	    mlr_status: MLR status string from PEPPOL network
+	    mlr_description: Detailed MLR description
+
+	Returns:
+	    dict: success and status
+	"""
+	allowed_statuses = ("Fetched", "Sent", "Delivered", "Failed")
+	if status not in allowed_statuses:
+		frappe.throw(
+			_("Invalid PEPPOL status: {0}. Allowed values: {1}").format(
+				status, ", ".join(allowed_statuses)
+			)
+		)
+
+	docstatus = frappe.db.get_value("Sales Invoice", sales_invoice_name, "docstatus")
+	if docstatus != 1:
+		frappe.throw(_("Cannot update PEPPOL status on an unsubmitted or cancelled invoice"))
+
+	updates = {"peppol_status": status}
+	if document_name is not None:
+		updates["peppol_document_name"] = document_name
+	if sent_on is not None:
+		updates["peppol_sent_on"] = sent_on
+	if error is not None:
+		updates["peppol_error"] = error
+	if mlr_status is not None:
+		updates["peppol_mlr_status"] = mlr_status
+	if mlr_description is not None:
+		updates["peppol_mlr_description"] = mlr_description
+
+	frappe.db.set_value("Sales Invoice", sales_invoice_name, updates, update_modified=False)
+	frappe.db.commit()
+
+	return {"success": True, "status": status}
+
+
+@frappe.whitelist()
 def get_peppol_status(sales_invoice_name):
 	"""Get the current PEPPOL status of a Sales Invoice
 

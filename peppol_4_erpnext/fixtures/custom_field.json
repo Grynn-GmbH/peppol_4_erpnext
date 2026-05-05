@@ -85,7 +85,7 @@
 		"fieldtype": "Select",
 		"label": "PEPPOL Status",
 		"insert_after": "send_via_peppol",
-		"options": "\nReady\nSent\nDelivered\nFailed",
+		"options": "\nReady\nFetched\nSent\nDelivered\nFailed",
 		"read_only": 1,
 		"allow_on_submit": 1
 	},
