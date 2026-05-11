@@ -87,7 +87,8 @@
 		"insert_after": "send_via_peppol",
 		"options": "\nReady\nFetched\nSent\nDelivered\nFailed",
 		"read_only": 1,
-		"allow_on_submit": 1
+		"allow_on_submit": 1,
+		"no_copy": 1
 	},
 	{
 		"doctype": "Custom Field",
@@ -98,7 +99,8 @@
 		"label": "TAPRNext Document",
 		"insert_after": "peppol_status",
 		"read_only": 1,
-		"allow_on_submit": 1
+		"allow_on_submit": 1,
+		"no_copy": 1
 	},
 	{
 		"doctype": "Custom Field",
@@ -117,7 +119,8 @@
 		"label": "Sent On",
 		"insert_after": "peppol_column_break",
 		"read_only": 1,
-		"allow_on_submit": 1
+		"allow_on_submit": 1,
+		"no_copy": 1
 	},
 	{
 		"doctype": "Custom Field",
@@ -128,7 +131,8 @@
 		"label": "Error Message",
 		"insert_after": "peppol_sent_on",
 		"read_only": 1,
-		"allow_on_submit": 1
+		"allow_on_submit": 1,
+		"no_copy": 1
 	},
 	{
 		"doctype": "Custom Field",
@@ -139,7 +143,8 @@
 		"label": "Message Level Response (MLR)",
 		"insert_after": "peppol_error",
 		"collapsible": 1,
-		"depends_on": "eval:doc.send_via_peppol"
+		"depends_on": "eval:doc.send_via_peppol",
+		"no_copy": 1
 	},
 	{
 		"doctype": "Custom Field",
@@ -151,7 +156,8 @@
 		"insert_after": "peppol_section_mlr",
 		"read_only": 1,
 		"allow_on_submit": 1,
-		"description": "Message Level Response status from AS4 network"
+		"description": "Message Level Response status from AS4 network",
+		"no_copy": 1
 	},
 	{
 		"doctype": "Custom Field",
@@ -163,7 +169,8 @@
 		"insert_after": "peppol_mlr_status",
 		"read_only": 1,
 		"allow_on_submit": 1,
-		"description": "Detailed response from PEPPOL AS4 network"
+		"description": "Detailed response from PEPPOL AS4 network",
+		"no_copy": 1
 	},
 	{
 		"doctype": "Custom Field",
