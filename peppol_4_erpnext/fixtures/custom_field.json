@@ -75,7 +75,8 @@
 		"label": "Send via PEPPOL",
 		"insert_after": "peppol_section",
 		"description": "Mark this invoice to be sent via PEPPOL network",
-		"allow_on_submit": 1
+		"allow_on_submit": 1,
+		"no_copy": 1
 	},
 	{
 		"doctype": "Custom Field",
