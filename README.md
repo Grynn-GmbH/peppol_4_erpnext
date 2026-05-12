@@ -1,6 +1,9 @@
 ### Peppol 4 Erpnext
 
-ERPNext client for sending and receiving e-invoices
+ERPNext client for sending and receiving e-invoices via TAPR.ch. 
+
+Sign up here: https://cloud.tapr.ch/dashboard/create-site/inflow/setup
+
 
 ### Installation
 
