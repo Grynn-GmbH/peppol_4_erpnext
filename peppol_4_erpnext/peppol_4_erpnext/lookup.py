@@ -7,7 +7,6 @@ import xml.etree.ElementTree as ET
 import dns.resolver
 import frappe
 import requests
-from dns.resolver import Answer
 
 _SML_PROD = "edelivery.tech.ec.europa.eu"
 _SML_TEST = "acc.edelivery.tech.ec.europa.eu"
@@ -22,18 +21,28 @@ _EXCLUDED_DOCTYPE_IDS: set[str] = set()
 _DOCTYPE_IDS_META: dict[str, tuple[str, str]] = {}
 
 _EXCLUDED_CATEGORIES = {"Application Response", "Message Level Response"}
+_doctypes_loaded = False
 
-with open(_DOCTYPES_FILE, encoding="utf-8") as _fh:
-	for _e in json.load(_fh)["values"]:
-		_full_id = f"{_e['scheme']}::{_e['value']}"
-		_DOCTYPE_NAMES[_full_id] = [_e["name"], _e["process-ids"][0]["value"]]
-		_val = _e["value"]
-		_cust_id = _val.split("##")[1].rsplit("::", 1)[0] if "##" in _val else _val
-		_proc_ids = _e.get("process-ids") or []
-		_proc_id = _proc_ids[0]["value"] if _proc_ids else ""
-		_DOCTYPE_IDS_META[_full_id] = (_cust_id, _proc_id)
-		if _e["category"] in _EXCLUDED_CATEGORIES:
-			_EXCLUDED_DOCTYPE_IDS.add(_full_id)
+
+def _load_doctypes():
+	global _doctypes_loaded
+	if _doctypes_loaded:
+		return
+	try:
+		with open(_DOCTYPES_FILE, encoding="utf-8") as fh:
+			for e in json.load(fh)["values"]:
+				full_id = f"{e['scheme']}::{e['value']}"
+				proc_ids = e.get("process-ids") or []
+				proc_id = proc_ids[0]["value"] if proc_ids else ""
+				_DOCTYPE_NAMES[full_id] = [e["name"], proc_id]
+				val = e["value"]
+				cust_id = val.split("##")[1].rsplit("::", 1)[0] if "##" in val else val
+				_DOCTYPE_IDS_META[full_id] = (cust_id, proc_id)
+				if e["category"] in _EXCLUDED_CATEGORIES:
+					_EXCLUDED_DOCTYPE_IDS.add(full_id)
+		_doctypes_loaded = True
+	except Exception as exc:
+		frappe.log_error(str(exc), "PEPPOL doctype load error")
 
 
 def _query_service_group(smp_host: str, full_participant_id: str) -> str:
@@ -43,6 +52,7 @@ def _query_service_group(smp_host: str, full_participant_id: str) -> str:
 		response.raise_for_status()
 		return response.text
 	except requests.exceptions.SSLError:
+		frappe.log_error(f"SSL error for SMP host {smp_host}, retrying over HTTP", "PEPPOL SMP SSL Warning")
 		response = requests.get(f"http://{smp_host}/{encoded}", timeout=20)
 		response.raise_for_status()
 		return response.text
@@ -113,18 +123,21 @@ def _resolve_smp_host(scheme: str, value: str) -> str:
 	resolver = dns.resolver.Resolver()
 	resolver.lifetime = 10
 
-	answers: Answer = resolver.resolve(dns_name, "NAPTR")
+	answers = resolver.resolve(dns_name, "NAPTR")
 	for rdata in answers:
 		flags = rdata.flags.decode()
 		service = rdata.service.decode()
 		regexp = rdata.regexp.decode()
-		print(regexp)
 		if flags.upper() == "U" and service == "Meta:SMP":
 			return urllib.parse.urlparse(_smp_url_from_naptr(regexp)).netloc
-	return None
+	raise frappe.ValidationError(
+		f"No SMP host found for participant {scheme}::{value}. Not registered in PEPPOL network."
+	)
 
 
 def smp_participant_lookup(participant_id: str) -> dict:
+	_load_doctypes()
+
 	scheme, value = _normalise_participant_id(participant_id)
 	full_id = f"{scheme}::{value}"
 	not_registered = {
@@ -155,7 +168,7 @@ def smp_participant_lookup(participant_id: str) -> dict:
 		frappe.log_error(str(exc)[:140], "PEPPOL SMP Lookup")
 		return {**not_registered, "smp_host": smp_host, "error": str(exc)}
 
-	doc_types = _extract_doctypes(xml_text)
+	doc_types = [dt for dt in _extract_doctypes(xml_text) if dt not in _EXCLUDED_DOCTYPE_IDS]
 	doc_names = [(_DOCTYPE_NAMES.get(dt) or [dt])[0] for dt in doc_types]
 	process_ids = [(_DOCTYPE_NAMES.get(dt) or [None, ""])[1] for dt in doc_types]
 	return {
@@ -163,5 +176,5 @@ def smp_participant_lookup(participant_id: str) -> dict:
 		"participant_id": full_id,
 		"document_types": doc_types,
 		"document_names": doc_names,
-		"process_id": process_ids,
+		"process_ids": process_ids,
 	}

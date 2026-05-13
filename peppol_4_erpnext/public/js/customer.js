@@ -40,17 +40,14 @@ function fetch_and_set_peppol_options(frm) {
 			frm.set_df_property(
 				"default_invoice_format",
 				"options",
-				["", ...invoice_names].join("\n")
+				["", ...invoice_names].join("\n"),
 			);
 			frm.set_df_property(
 				"default_credit_note_format",
 				"options",
-				["", ...credit_note_names].join("\n")
+				["", ...credit_note_names].join("\n"),
 			);
-			frm.refresh_fields([
-				"default_invoice_format",
-				"default_credit_note_format",
-			]);
+			frm.refresh_fields(["default_invoice_format", "default_credit_note_format"]);
 		},
 		error() {
 			clear_peppol_format_fields(frm);
@@ -61,20 +58,18 @@ function fetch_and_set_peppol_options(frm) {
 function set_format_ids(frm, type) {
 	const lookup = frm._peppol_lookup;
 	if (!lookup) return;
-	const { document_names = [], document_types = [], process_id = [] } = lookup;
+	const { document_names = [], document_types = [], process_ids = [] } = lookup;
 
 	const selected =
-		type === "invoice"
-			? frm.doc.default_invoice_format
-			: frm.doc.default_credit_note_format;
+		type === "invoice" ? frm.doc.default_invoice_format : frm.doc.default_credit_note_format;
 
 	const idx = document_names.indexOf(selected);
 	if (type === "invoice") {
 		frm.set_value("invoice_format_id", idx >= 0 ? document_types[idx] : "");
-		frm.set_value("invoice_process_id", idx >= 0 ? process_id[idx] : "");
+		frm.set_value("invoice_process_id", idx >= 0 ? process_ids[idx] : "");
 	} else {
 		frm.set_value("credit_note_format_id", idx >= 0 ? document_types[idx] : "");
-		frm.set_value("credit_note_process_id", idx >= 0 ? process_id[idx] : "");
+		frm.set_value("credit_note_process_id", idx >= 0 ? process_ids[idx] : "");
 	}
 }
 
