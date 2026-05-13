@@ -22,7 +22,7 @@ frappe.ui.form.on("Sales Invoice", {
 							function () {
 								mark_for_peppol(frm);
 							},
-							__("Actions")
+							__("Actions"),
 						);
 					}
 				},
@@ -31,45 +31,43 @@ frappe.ui.form.on("Sales Invoice", {
 	},
 
 	send_via_peppol: function (frm) {
-		// When checkbox is toggled, validate and set status
-		if (frm.doc.send_via_peppol && frm.doc.docstatus === 1) {
-			frappe.call({
-				method: "peppol_4_erpnext.peppol_4_erpnext.api.can_mark_for_peppol",
-				args: {
-					sales_invoice_name: frm.doc.name,
-				},
-				callback: function (r) {
-					if (r.message && !r.message.can_mark) {
-						frappe.msgprint({
-							title: __("Cannot Send via PEPPOL"),
-							message: r.message.issues.join("<br>"),
-							indicator: "red",
-						});
-						frm.set_value("send_via_peppol", 0);
-					} else if (r.message && r.message.can_mark) {
-						// Set status to Ready
-						frappe.call({
-							method: "peppol_4_erpnext.peppol_4_erpnext.api.mark_invoice_for_peppol",
-							args: {
-								sales_invoice_name: frm.doc.name,
-							},
-							callback: function (res) {
-								if (res.message && res.message.success) {
-									frappe.show_alert(
-										{
-											message: res.message.message,
-											indicator: "green",
-										},
-										5
-									);
-									frm.reload_doc();
-								}
-							},
-						});
-					}
-				},
-			});
-		}
+		if (!frm.doc.send_via_peppol || frm.doc.docstatus !== 1) return;
+
+		frappe.call({
+			method: "peppol_4_erpnext.peppol_4_erpnext.api.can_mark_for_peppol",
+			args: {
+				sales_invoice_name: frm.doc.name,
+			},
+			callback: function (r) {
+				if (r.message && !r.message.can_mark) {
+					frappe.msgprint({
+						title: __("Cannot Send via PEPPOL"),
+						message: r.message.issues.join("<br>"),
+						indicator: "red",
+					});
+					frm.set_value("send_via_peppol", 0);
+				} else if (r.message && r.message.can_mark) {
+					frappe.call({
+						method: "peppol_4_erpnext.peppol_4_erpnext.api.mark_invoice_for_peppol",
+						args: {
+							sales_invoice_name: frm.doc.name,
+						},
+						callback: function (res) {
+							if (res.message && res.message.success) {
+								frappe.show_alert(
+									{
+										message: res.message.message,
+										indicator: "green",
+									},
+									5,
+								);
+								frm.reload_doc();
+							}
+						},
+					});
+				}
+			},
+		});
 	},
 });
 
@@ -92,7 +90,7 @@ function mark_for_peppol(frm) {
 									message: r.message.message,
 									indicator: "green",
 								},
-								5
+								5,
 							);
 							frm.reload_doc();
 						} else {
@@ -105,7 +103,7 @@ function mark_for_peppol(frm) {
 					}
 				},
 			});
-		}
+		},
 	);
 }
 
@@ -113,29 +111,15 @@ function show_peppol_status_indicator(frm) {
 	if (!frm.doc.send_via_peppol) {
 		return;
 	}
-
-	let indicator = get_status_indicator(frm.doc.peppol_status);
-	let message = "";
-
-	switch (frm.doc.peppol_status) {
-		case "Ready":
-			message = __("PEPPOL: Ready for pickup by TAPRNext");
-			break;
-		case "Fetched":
-			message = __("PEPPOL: Fetched by TAPRNext — processing");
-			break;
-		case "Sent":
-			message = __("PEPPOL: Sent via PEPPOL network");
-			break;
-		case "Delivered":
-			message = __("PEPPOL: Delivered to recipient");
-			break;
-		case "Failed":
-			message = __("PEPPOL: Failed - {0}", [frm.doc.peppol_error || "Unknown error"]);
-			break;
-		default:
-			message = __("PEPPOL: Marked for sending");
-	}
+	const statuses = {
+		Ready: [__("PEPPOL: Ready for pickup by TAPRNext"), "orange"],
+		Fetched: [__("PEPPOL: Fetched by TAPRNext — processing"), "yellow"],
+		Sent: [__("PEPPOL: Sent via PEPPOL network"), "blue"],
+		Delivered: [__("PEPPOL: Delivered to recipient"), "green"],
+		Failed: [__("PEPPOL: Failed - {0}", [frm.doc.peppol_error || "Unknown error"]), "red"],
+		Unknown: [__("PEPPOL: Marked for sending"), "grey"],
+	};
+	let [message, indicator] = statuses[frm.doc.peppol_status] || statuses.Unknown;
 
 	if (message) {
 		frm.dashboard.set_headline_alert(
@@ -145,24 +129,7 @@ function show_peppol_status_indicator(frm) {
 						${message}
 					</span>
 				</div>
-			</div>`
+			</div>`,
 		);
-	}
-}
-
-function get_status_indicator(status) {
-	switch (status) {
-		case "Ready":
-			return "orange";
-		case "Fetched":
-			return "yellow";
-		case "Sent":
-			return "blue";
-		case "Delivered":
-			return "green";
-		case "Failed":
-			return "red";
-		default:
-			return "grey";
 	}
 }

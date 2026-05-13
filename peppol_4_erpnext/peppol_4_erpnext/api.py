@@ -1,6 +1,14 @@
 import frappe
 from frappe import _
 
+from peppol_4_erpnext.peppol_4_erpnext.lookup import smp_participant_lookup
+
+
+@frappe.whitelist()
+def lookup_peppol_participant(participant_id):
+	"""Lookup PEPPOL participant directly via the public SMP network (no credentials needed)."""
+	return smp_participant_lookup(participant_id)
+
 
 @frappe.whitelist()
 def can_mark_for_peppol(sales_invoice_name):
@@ -55,7 +63,6 @@ def mark_invoice_for_peppol(sales_invoice_name):
 	Returns:
 		dict: Result with success status and message
 	"""
-	# Check eligibility first
 	eligibility = can_mark_for_peppol(sales_invoice_name)
 	if not eligibility.get("can_mark"):
 		return {
@@ -64,13 +71,29 @@ def mark_invoice_for_peppol(sales_invoice_name):
 		}
 
 	try:
-		# Update the invoice
+		si = frappe.get_doc("Sales Invoice", sales_invoice_name)
+		is_credit_note = si.get("is_return")
+		format_field = "credit_note_format_id" if is_credit_note else "invoice_format_id"
+		process_field = "credit_note_process_id" if is_credit_note else "invoice_process_id"
+
+		customer_data = (
+			frappe.db.get_value(
+				"Customer",
+				si.customer,
+				[format_field, process_field],
+				as_dict=True,
+			)
+			or {}
+		)
+
 		frappe.db.set_value(
 			"Sales Invoice",
 			sales_invoice_name,
 			{
 				"send_via_peppol": 1,
 				"peppol_status": "Ready",
+				"peppol_document_format": customer_data.get(format_field) or "",
+				"peppol_process_id": customer_data.get(process_field) or "",
 			},
 			update_modified=False,
 		)
@@ -119,9 +142,7 @@ def update_peppol_status(
 	allowed_statuses = ("Fetched", "Sent", "Delivered", "Failed")
 	if status not in allowed_statuses:
 		frappe.throw(
-			_("Invalid PEPPOL status: {0}. Allowed values: {1}").format(
-				status, ", ".join(allowed_statuses)
-			)
+			_("Invalid PEPPOL status: {0}. Allowed values: {1}").format(status, ", ".join(allowed_statuses))
 		)
 
 	docstatus = frappe.db.get_value("Sales Invoice", sales_invoice_name, "docstatus")
