@@ -1,49 +1,13 @@
 import frappe
-import requests
 from frappe import _
+
+from peppol_4_erpnext.peppol_4_erpnext.lookup import smp_participant_lookup
 
 
 @frappe.whitelist()
 def lookup_peppol_participant(participant_id):
-	"""Lookup PEPPOL participant details via TAPRNext.
-
-	Returns document types, names, and process IDs supported by the participant.
-	"""
-	if not participant_id:
-		return {"registered": False, "document_names": [], "document_types": [], "process_id": []}
-
-	settings = frappe.get_single("PEPPOL Settings")
-	tapr_next_url = settings.get("tapr_next_url")
-	api_key = settings.get("tapr_next_api_key")
-	api_secret = settings.get_password("tapr_next_api_secret")
-
-	if not tapr_next_url:
-		frappe.throw(_("TAPRNext URL is not configured in PEPPOL Settings"))
-	if not api_key or not api_secret:
-		frappe.throw(_("TAPRNext API credentials are not configured in PEPPOL Settings"))
-
-	if not tapr_next_url.startswith(("http://", "https://")):
-		tapr_next_url = "https://" + tapr_next_url
-
-	try:
-		resp = requests.get(
-			f"{tapr_next_url.rstrip('/')}/api/method/tapr_next.peppol.api.lookup_peppol_participant",
-			params={"participant_id": participant_id},
-			headers={"Authorization": f"token {api_key}:{api_secret}"},
-			timeout=10,
-		)
-		resp.raise_for_status()
-		response = resp.json().get("message", {})
-	except Exception as e:
-		frappe.log_error(message=str(e), title="PEPPOL Lookup Error")
-		frappe.throw(_("PEPPOL participant lookup failed: {0}").format(str(e)))
-
-	if not response.get("registered"):
-		frappe.throw(
-			_("Provided PEPPOL Participant ID not found on the Peppol Network"),
-			title=_("PEPPOL Participant Not Found"),
-		)
-	return response
+	"""Lookup PEPPOL participant directly via the public SMP network (no credentials needed)."""
+	return smp_participant_lookup(participant_id)
 
 
 @frappe.whitelist()
@@ -112,12 +76,15 @@ def mark_invoice_for_peppol(sales_invoice_name):
 		format_field = "credit_note_format_id" if is_credit_note else "invoice_format_id"
 		process_field = "credit_note_process_id" if is_credit_note else "invoice_process_id"
 
-		customer_data = frappe.db.get_value(
-			"Customer",
-			si.customer,
-			[format_field, process_field],
-			as_dict=True,
-		) or {}
+		customer_data = (
+			frappe.db.get_value(
+				"Customer",
+				si.customer,
+				[format_field, process_field],
+				as_dict=True,
+			)
+			or {}
+		)
 
 		frappe.db.set_value(
 			"Sales Invoice",

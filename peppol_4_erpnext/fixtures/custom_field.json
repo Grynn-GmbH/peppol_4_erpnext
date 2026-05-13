@@ -76,7 +76,7 @@
 		"fieldname": "default_credit_note_format",
 		"fieldtype": "Select",
 		"label": "Default Credit Note Format",
-		"insert_after": "tax_withholding_category",
+		"insert_after": "invoice_process_id",
 		"depends_on": "eval:doc.peppol_id"
 	},
 	{

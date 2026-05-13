@@ -27,7 +27,10 @@ function fetch_and_set_peppol_options(frm) {
 		method: "peppol_4_erpnext.peppol_4_erpnext.api.lookup_peppol_participant",
 		args: { participant_id: frm.doc.peppol_id },
 		callback(r) {
-			if (!r.message) return;
+			if (!r.message || !r.message.registered) {
+				clear_peppol_format_fields(frm);
+				return;
+			}
 			frm._peppol_lookup = r.message;
 			const { document_names = [] } = r.message;
 
@@ -48,6 +51,9 @@ function fetch_and_set_peppol_options(frm) {
 				"default_invoice_format",
 				"default_credit_note_format",
 			]);
+		},
+		error() {
+			clear_peppol_format_fields(frm);
 		},
 	});
 }
