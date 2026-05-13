@@ -5,6 +5,10 @@
 	"engine": "InnoDB",
 	"field_order": [
 		"enabled",
+		"tapr_next_section",
+		"tapr_next_url",
+		"tapr_next_api_key",
+		"tapr_next_api_secret",
 		"section_break_info",
 		"info_html"
 	],
@@ -15,6 +19,27 @@
 			"fieldtype": "Check",
 			"label": "Enable PEPPOL Integration",
 			"description": "Enable PEPPOL e-invoice sending and receiving for this site"
+		},
+		{
+			"fieldname": "tapr_next_section",
+			"fieldtype": "Section Break",
+			"label": "TAPRNext Connection"
+		},
+		{
+			"fieldname": "tapr_next_url",
+			"fieldtype": "Data",
+			"label": "TAPRNext URL",
+			"description": "Base URL of your TAPRNext instance (e.g. https://abc.gc.tapr.ch)"
+		},
+		{
+			"fieldname": "tapr_next_api_key",
+			"fieldtype": "Data",
+			"label": "API Key"
+		},
+		{
+			"fieldname": "tapr_next_api_secret",
+			"fieldtype": "Password",
+			"label": "API Secret"
 		},
 		{
 			"fieldname": "section_break_info",
