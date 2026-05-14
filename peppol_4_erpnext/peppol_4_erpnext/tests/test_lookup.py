@@ -28,21 +28,18 @@ class TestSmpParticipantLookup(unittest.TestCase):
 		self.assertTrue(result["registered"])
 		self.assertIn("participant_id", result)
 
+	@patch("peppol_4_erpnext.peppol_4_erpnext.lookup.frappe")
 	@patch("peppol_4_erpnext.peppol_4_erpnext.lookup._resolve_smp_host")
-	def test_validate_only_false_when_dns_fails(self, mock_resolve):
-		"""validate_only=True returns registered=False when DNS lookup fails."""
-		import frappe
-
-		mock_resolve.side_effect = frappe.ValidationError("No SMP host found")
+	def test_validate_only_false_when_dns_fails(self, mock_resolve, mock_frappe):
+		"""validate_only=True returns registered=False and logs error when DNS raises."""
+		mock_resolve.side_effect = Exception("DNS lookup failed")
+		mock_frappe.log_error = MagicMock()
 		smp_participant_lookup = self._import()
 
-		with patch("peppol_4_erpnext.peppol_4_erpnext.lookup.frappe") as mock_frappe:
-			mock_frappe.ValidationError = frappe.ValidationError
-			mock_frappe.log_error = MagicMock()
-			mock_resolve.side_effect = Exception("DNS lookup failed")
-			result = smp_participant_lookup("0088:999999999", validate_only=True)
+		result = smp_participant_lookup("0088:999999999", validate_only=True)
 
 		self.assertFalse(result["registered"])
+		mock_frappe.log_error.assert_called_once()
 
 	@patch("peppol_4_erpnext.peppol_4_erpnext.lookup._resolve_smp_host")
 	@patch("peppol_4_erpnext.peppol_4_erpnext.lookup._query_service_group")

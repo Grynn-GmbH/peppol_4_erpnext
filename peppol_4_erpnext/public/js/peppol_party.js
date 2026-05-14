@@ -3,8 +3,6 @@
 		peppol_id(frm) {
 			if (frm.doc.peppol_id) {
 				validate_peppol_id(frm);
-			} else {
-				frappe.show_alert({ message: __("PEPPOL ID cleared"), indicator: "grey" }, 2);
 			}
 		},
 	});
