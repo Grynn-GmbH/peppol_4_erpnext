@@ -32,6 +32,7 @@ function fetch_peppol_data(frm, show_feedback) {
 }
 
 function _do_fetch_peppol_data(frm, show_feedback) {
+	const seq = (frm._peppol_seq = (frm._peppol_seq || 0) + 1);
 	if (show_feedback) {
 		frappe.show_alert({ message: __("Validating PEPPOL ID..."), indicator: "blue" }, 3);
 	}
@@ -39,6 +40,7 @@ function _do_fetch_peppol_data(frm, show_feedback) {
 		method: "peppol_4_erpnext.peppol_4_erpnext.api.lookup_peppol_participant",
 		args: { participant_id: frm.doc.peppol_id },
 		callback(r) {
+			if (seq !== frm._peppol_seq) return;
 			if (!r.message) {
 				clear_peppol_format_fields(frm);
 				if (show_feedback) {
