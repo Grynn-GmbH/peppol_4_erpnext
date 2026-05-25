@@ -11,6 +11,7 @@ frappe.ui.form.on("Customer", {
 		if (frm.doc.peppol_id) {
 			fetch_peppol_data(frm, true);
 		} else {
+			clearTimeout(frm._peppol_debounce);
 			clear_peppol_format_fields(frm);
 		}
 	},

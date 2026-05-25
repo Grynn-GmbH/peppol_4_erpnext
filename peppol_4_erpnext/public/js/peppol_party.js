@@ -3,6 +3,8 @@
 		peppol_id(frm) {
 			if (frm.doc.peppol_id) {
 				validate_peppol_id(frm);
+			} else {
+				clearTimeout(frm._peppol_debounce);
 			}
 		},
 	});
