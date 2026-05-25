@@ -5,9 +5,9 @@ from peppol_4_erpnext.peppol_4_erpnext.lookup import smp_participant_lookup
 
 
 @frappe.whitelist()
-def lookup_peppol_participant(participant_id):
+def lookup_peppol_participant(participant_id, validate_only=False):
 	"""Lookup PEPPOL participant directly via the public SMP network (no credentials needed)."""
-	return smp_participant_lookup(participant_id)
+	return smp_participant_lookup(participant_id, validate_only=frappe.utils.cint(validate_only))
 
 
 @frappe.whitelist()
