@@ -102,12 +102,12 @@ def peppol_dns_name(scheme: str, value: str, test: bool = False) -> str:
 	Args:
 	    participant_id: Either "0088:1234567890" or
 	                    "iso6523-actorid-upis::0088:1234567890"
-	    test: True for the test SML (acc.edelivery.tech.ec.europa.eu),
-	          False for production (edelivery.tech.ec.europa.eu)
+	    test: True for the test SML (participant.sml.test.tech.peppol.org),
+	          False for production (participant.sml.prod.tech.peppol.org)
 
 	Returns:
-	    The DNS name that the Helger BDXLURLProvider would look up, e.g.:
-	    "bdxr-as4--0088-grynn-in.iso6523-actorid-upis.edelivery.tech.ec.europa.eu"
+	    The DNS name that the BDXL lookup would resolve, e.g.:
+	    "bdxr-as4--0088-grynn-in.iso6523-actorid-upis.participant.sml.prod.tech.peppol.org"
 	"""
 
 	# Lowercase only the value before hashing (bAddIdentifierSchemeToZone=true)
