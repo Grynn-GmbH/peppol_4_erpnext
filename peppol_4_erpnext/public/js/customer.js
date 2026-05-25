@@ -1,6 +1,19 @@
 frappe.ui.form.on("Customer", {
 	refresh(frm) {
-		if (frm.doc.peppol_id) {
+		if (!frm.doc.peppol_id) return;
+		// Seed saved values immediately so the Select renders before async resolves
+		if (frm.doc.default_invoice_format) {
+			frm.set_df_property("default_invoice_format", "options", frm.doc.default_invoice_format);
+		}
+		if (frm.doc.default_credit_note_format) {
+			frm.set_df_property(
+				"default_credit_note_format",
+				"options",
+				frm.doc.default_credit_note_format,
+			);
+		}
+		// Skip network call if already fetched for this peppol_id
+		if (frm._peppol_lookup?.participant_id !== frm.doc.peppol_id) {
 			fetch_and_set_peppol_options(frm);
 		}
 	},
