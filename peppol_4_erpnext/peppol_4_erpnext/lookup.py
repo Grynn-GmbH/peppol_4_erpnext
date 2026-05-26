@@ -140,9 +140,7 @@ def _resolve_smp_host(scheme: str, value: str) -> str:
 	)
 
 
-def smp_participant_lookup(participant_id: str) -> dict:
-	_load_doctypes()
-
+def smp_participant_lookup(participant_id: str, validate_only: bool = False) -> dict:
 	scheme, value = _normalise_participant_id(participant_id)
 	full_id = f"{scheme}::{value}"
 	not_registered = {
@@ -157,6 +155,10 @@ def smp_participant_lookup(participant_id: str) -> dict:
 	except Exception as exc:
 		frappe.log_error(str(exc)[:140], "PEPPOL SMP Lookup")
 		return {**not_registered, "error": str(exc)}
+
+	if validate_only:
+		return {"registered": True, "participant_id": full_id}
+	_load_doctypes()
 
 	try:
 		xml_text = _query_service_group(smp_host, full_id)
