@@ -16,7 +16,9 @@ frappe.ui.form.on("Customer", {
 					frm.doc.default_credit_note_format,
 				);
 			}
-			fetch_peppol_data(frm, false);
+			if (frm._peppol_lookup?._cached_for !== frm.doc.peppol_id) {
+				fetch_peppol_data(frm, false);
+			}
 		} else {
 			toggle_format_fields(frm, false);
 		}
@@ -86,11 +88,10 @@ function _do_fetch_peppol_data(frm, show_feedback) {
 		frappe.show_alert({ message: __("Validating PEPPOL ID..."), indicator: "blue" }, 3);
 	}
 
-	if (frm._peppol_lookup) {
-		if (frm._peppol_lookup.participant_id.split("::")[1] === frm.doc.peppol_id) {
-			response_handler(frm, frm._peppol_lookup, show_feedback);
-			return;
-		}
+	if (!frm.doc.peppol_id) return;
+	if (frm._peppol_lookup?._cached_for === frm.doc.peppol_id) {
+		response_handler(frm, frm._peppol_lookup, show_feedback);
+		return;
 	}
 	frappe.call({
 		method: "peppol_4_erpnext.peppol_4_erpnext.api.lookup_peppol_participant",
@@ -107,8 +108,9 @@ function _do_fetch_peppol_data(frm, show_feedback) {
 				}
 				return;
 			}
-			response_handler(frm, r.message, show_feedback);
+			r.message._cached_for = frm.doc.peppol_id;
 			frm._peppol_lookup = r.message;
+			response_handler(frm, r.message, show_feedback);
 		},
 		error() {
 			clear_peppol_format_fields(frm);
