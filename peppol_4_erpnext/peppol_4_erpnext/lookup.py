@@ -8,11 +8,10 @@ import dns.resolver
 import frappe
 import requests
 
-_SML_PROD = "edelivery.tech.ec.europa.eu"
-_SML_TEST = "acc.edelivery.tech.ec.europa.eu"
+_SML_PROD = "participant.sml.prod.tech.peppol.org"
+_SML_TEST = "participant.sml.test.tech.peppol.org"
 
 _BUSDOX_NS = "http://busdox.org/serviceMetadata/publishing/1.0/"
-_DOCTYPES_FILE = frappe.get_app_path("peppol_4_erpnext", "peppol_document_types.json")
 
 _DOCTYPE_NAMES: dict[str, list] = {}
 # Doc type IDs the user should NOT be able to send an invoice as
@@ -29,7 +28,8 @@ def _load_doctypes():
 	if _doctypes_loaded:
 		return
 	try:
-		with open(_DOCTYPES_FILE, encoding="utf-8") as fh:
+		doctypes_file = frappe.get_app_path("peppol_4_erpnext", "peppol_document_types.json")
+		with open(doctypes_file, encoding="utf-8") as fh:
 			for e in json.load(fh)["values"]:
 				full_id = f"{e['scheme']}::{e['value']}"
 				proc_ids = e.get("process-ids") or []
@@ -52,7 +52,12 @@ def _query_service_group(smp_host: str, full_participant_id: str) -> str:
 		response.raise_for_status()
 		return response.text
 	except requests.exceptions.SSLError:
-		frappe.log_error(f"SSL error for SMP host {smp_host}, retrying over HTTP", "PEPPOL SMP SSL Warning")
+		if not frappe.conf.get("peppol_allow_http_fallback"):
+			raise
+		frappe.log_error(
+			f"SSL error for SMP host {smp_host}, retrying over HTTP (peppol_allow_http_fallback=1)",
+			"PEPPOL SMP SSL Warning",
+		)
 		response = requests.get(f"http://{smp_host}/{encoded}", timeout=20)
 		response.raise_for_status()
 		return response.text
@@ -97,12 +102,12 @@ def peppol_dns_name(scheme: str, value: str, test: bool = False) -> str:
 	Args:
 	    participant_id: Either "0088:1234567890" or
 	                    "iso6523-actorid-upis::0088:1234567890"
-	    test: True for the test SML (acc.edelivery.tech.ec.europa.eu),
-	          False for production (edelivery.tech.ec.europa.eu)
+	    test: True for the test SML (participant.sml.test.tech.peppol.org),
+	          False for production (participant.sml.prod.tech.peppol.org)
 
 	Returns:
-	    The DNS name that the Helger BDXLURLProvider would look up, e.g.:
-	    "bdxr-as4--0088-grynn-in.iso6523-actorid-upis.edelivery.tech.ec.europa.eu"
+	    The DNS name that the BDXL lookup would resolve, e.g.:
+	    "bdxr-as4--0088-grynn-in.iso6523-actorid-upis.participant.sml.prod.tech.peppol.org"
 	"""
 
 	# Lowercase only the value before hashing (bAddIdentifierSchemeToZone=true)

@@ -1,7 +1,24 @@
 frappe.ui.form.on("Customer", {
 	refresh(frm) {
 		if (frm.doc.peppol_id) {
-			fetch_peppol_data(frm, false);
+			// Seed saved values immediately so the Select renders before async resolves
+			if (frm.doc.default_invoice_format) {
+				frm.set_df_property(
+					"default_invoice_format",
+					"options",
+					frm.doc.default_invoice_format,
+				);
+			}
+			if (frm.doc.default_credit_note_format) {
+				frm.set_df_property(
+					"default_credit_note_format",
+					"options",
+					frm.doc.default_credit_note_format,
+				);
+			}
+			if (frm._peppol_lookup?._cached_for !== frm.doc.peppol_id) {
+				fetch_peppol_data(frm, false);
+			}
 		} else {
 			toggle_format_fields(frm, false);
 		}
@@ -31,11 +48,50 @@ function fetch_peppol_data(frm, show_feedback) {
 		_do_fetch_peppol_data(frm, show_feedback);
 	}, 300);
 }
+function response_handler(frm, message, show_feedback) {
+	if (!message.registered) {
+		clear_peppol_format_fields(frm);
+		if (show_feedback) {
+			frappe.show_alert(
+				{
+					message: __("PEPPOL ID is not registered on the network"),
+					indicator: "red",
+				},
+				7,
+			);
+		}
+		return;
+	}
+
+	const { document_names = [] } = message;
+	if (show_feedback) {
+		frappe.show_alert(
+			{ message: __("PEPPOL ID is registered on the network"), indicator: "green" },
+			5,
+		);
+	}
+	const invoice_names = document_names.filter((n) => n.includes("Invoice"));
+	const credit_note_names = document_names.filter((n) => n.includes("Credit Note"));
+	frm.set_df_property("default_invoice_format", "options", ["", ...invoice_names].join("\n"));
+	frm.set_df_property(
+		"default_credit_note_format",
+		"options",
+		["", ...credit_note_names].join("\n"),
+	);
+	frm.refresh_fields(["default_invoice_format", "default_credit_note_format"]);
+	toggle_format_fields(frm, true);
+}
 
 function _do_fetch_peppol_data(frm, show_feedback) {
 	const seq = (frm._peppol_seq = (frm._peppol_seq || 0) + 1);
 	if (show_feedback) {
 		frappe.show_alert({ message: __("Validating PEPPOL ID..."), indicator: "blue" }, 3);
+	}
+
+	if (!frm.doc.peppol_id) return;
+	if (frm._peppol_lookup?._cached_for === frm.doc.peppol_id) {
+		response_handler(frm, frm._peppol_lookup, show_feedback);
+		return;
 	}
 	frappe.call({
 		method: "peppol_4_erpnext.peppol_4_erpnext.api.lookup_peppol_participant",
@@ -52,38 +108,9 @@ function _do_fetch_peppol_data(frm, show_feedback) {
 				}
 				return;
 			}
-			if (!r.message.registered) {
-				clear_peppol_format_fields(frm);
-				if (show_feedback) {
-					frappe.show_alert(
-						{ message: __("PEPPOL ID is not registered on the network"), indicator: "red" },
-						7,
-					);
-				}
-				return;
-			}
+			r.message._cached_for = frm.doc.peppol_id;
 			frm._peppol_lookup = r.message;
-			const { document_names = [] } = r.message;
-			if (show_feedback) {
-				frappe.show_alert(
-					{ message: __("PEPPOL ID is registered on the network"), indicator: "green" },
-					5,
-				);
-			}
-			const invoice_names = document_names.filter((n) => n.includes("Invoice"));
-			const credit_note_names = document_names.filter((n) => n.includes("Credit Note"));
-			frm.set_df_property(
-				"default_invoice_format",
-				"options",
-				["", ...invoice_names].join("\n"),
-			);
-			frm.set_df_property(
-				"default_credit_note_format",
-				"options",
-				["", ...credit_note_names].join("\n"),
-			);
-			frm.refresh_fields(["default_invoice_format", "default_credit_note_format"]);
-			toggle_format_fields(frm, true);
+			response_handler(frm, r.message, show_feedback);
 		},
 		error() {
 			clear_peppol_format_fields(frm);
