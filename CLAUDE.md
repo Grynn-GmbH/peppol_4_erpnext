@@ -87,6 +87,21 @@ POST /api/resource/Purchase Invoice
 
 TAPRNext sends the invoice in ERPNext's native Purchase Invoice format, including PEPPOL tracking fields.
 
+#### Pushing the PEPPOL Document Type Code List (TAPRNext pushes to Client)
+
+```
+POST /api/method/peppol_4_erpnext.peppol_4_erpnext.code_list.update_peppol_code_list
+{"code_list": {"version": "9.7", "entry-count": 321, "values": [ ... ]}}
+
+GET  /api/method/peppol_4_erpnext.peppol_4_erpnext.code_list.get_peppol_code_list_info
+```
+
+Both require the **System Manager** role. The pushed list is validated, then stored at
+`<site>/private/files/peppol_4_erpnext/peppol_document_types.json`; the app-bundled copy is
+the fallback for sites that were never pushed to. The sender is authoritative — the list is
+always replaced, so a rollback to an older version works. The derived lookup tables are cached
+beside the raw list as `peppol_document_types_index.json` and revalidated with a single `stat()`.
+
 ## Components
 
 ### DocTypes
@@ -121,6 +136,8 @@ TAPRNext sends the invoice in ERPNext's native Purchase Invoice format, includin
 peppol_4_erpnext/
 ├── peppol_4_erpnext/
 │   ├── api.py                    # Whitelisted API endpoints
+│   ├── lookup.py                 # SMP participant lookup + doc type tables
+│   ├── code_list.py              # Receives the pushed PEPPOL doc type code list
 │   ├── doctype/
 │   │   └── peppol_settings/      # Settings configuration
 │   └── fixtures/

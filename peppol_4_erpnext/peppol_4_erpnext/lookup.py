@@ -8,6 +8,8 @@ import dns.resolver
 import frappe
 import requests
 
+from peppol_4_erpnext.peppol_4_erpnext import code_list
+
 _SML_PROD = "participant.sml.prod.tech.peppol.org"
 _SML_TEST = "participant.sml.test.tech.peppol.org"
 
@@ -19,28 +21,69 @@ _EXCLUDED_DOCTYPE_IDS: set[str] = set()
 # Maps full doc type ID → (customization_id, first_process_id)
 _DOCTYPE_IDS_META: dict[str, tuple[str, str]] = {}
 
-_EXCLUDED_CATEGORIES = {"Application Response", "Message Level Response"}
-_doctypes_loaded = False
+# Identity of the raw code list the tables above were built from; None = not loaded
+_loaded_stamp: dict | None = None
+
+
+def invalidate_doctypes():
+	"""Force the next _load_doctypes() to rebuild, e.g. after a code list push."""
+	global _loaded_stamp
+	_loaded_stamp = None
+
+
+def _apply_index(index: dict):
+	global _DOCTYPE_NAMES, _DOCTYPE_IDS_META, _EXCLUDED_DOCTYPE_IDS
+	# Replace, never merge — a pushed list may have dropped entries.
+	_DOCTYPE_NAMES = {k: list(v) for k, v in index["doctype_names"].items()}
+	_DOCTYPE_IDS_META = {k: (v[0], v[1]) for k, v in index["ids_meta"].items()}
+	_EXCLUDED_DOCTYPE_IDS = set(index["excluded"])
+
+
+def _index_for(raw_path: str) -> dict:
+	"""Cached derived index for `raw_path`, rebuilt and re-cached on a cache miss."""
+	index = code_list.read_index(raw_path)
+	if index is None:
+		with open(raw_path, encoding="utf-8") as fh:
+			index = code_list.build_index(json.load(fh))
+		code_list.write_index(raw_path, index)
+	return index
 
 
 def _load_doctypes():
-	global _doctypes_loaded
-	if _doctypes_loaded:
-		return
+	"""Populate the doc type lookup tables from the active code list.
+
+	Prefers the site file pushed by tapr_next over the app-bundled copy, and the
+	cached derived index over re-deriving it. Validity of both the in-process
+	tables and the on-disk index costs one stat(), so a push is picked up by every
+	worker without a restart. Never raises: lookups must survive a bad list.
+	"""
+	global _loaded_stamp
+	raw_path = code_list.active_raw_path()
 	try:
-		doctypes_file = frappe.get_app_path("peppol_4_erpnext", "peppol_document_types.json")
-		with open(doctypes_file, encoding="utf-8") as fh:
-			for e in json.load(fh)["values"]:
-				full_id = f"{e['scheme']}::{e['value']}"
-				proc_ids = e.get("process-ids") or []
-				proc_id = proc_ids[0]["value"] if proc_ids else ""
-				_DOCTYPE_NAMES[full_id] = [e["name"], proc_id]
-				val = e["value"]
-				cust_id = val.split("##")[1].rsplit("::", 1)[0] if "##" in val else val
-				_DOCTYPE_IDS_META[full_id] = (cust_id, proc_id)
-				if e["category"] in _EXCLUDED_CATEGORIES:
-					_EXCLUDED_DOCTYPE_IDS.add(full_id)
-		_doctypes_loaded = True
+		stamp = code_list.file_stamp(raw_path)
+		if _loaded_stamp == stamp:
+			return
+	except Exception as exc:
+		frappe.log_error(str(exc), "PEPPOL doctype load error")
+		return
+
+	try:
+		_apply_index(_index_for(raw_path))
+		_loaded_stamp = stamp
+		return
+	except Exception as exc:
+		frappe.log_error(str(exc), "PEPPOL doctype load error")
+
+	if raw_path == code_list.bundled_raw_path():
+		return
+
+	# A bad pushed list must not take lookups down: drop its cache, use the
+	# bundled copy — but stamp the load with the site file, so this is retried
+	# only once, when a later push replaces it.
+	code_list.drop_index()
+	try:
+		_apply_index(_index_for(code_list.bundled_raw_path()))
+		_loaded_stamp = stamp
 	except Exception as exc:
 		frappe.log_error(str(exc), "PEPPOL doctype load error")
 
