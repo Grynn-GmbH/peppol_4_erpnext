@@ -93,9 +93,7 @@ class TestBuildIndex(unittest.TestCase):
 		invoice_id = "busdox-docid-qns::urn:x::Invoice##urn:cen.eu:en16931:2017::2.1"
 		self.assertEqual(index["doctype_names"][invoice_id], ["Invoice", "urn:proc:01:1.0"])
 		# customization id = between '##' and the trailing '::<version>'
-		self.assertEqual(
-			index["ids_meta"][invoice_id], ["urn:cen.eu:en16931:2017", "urn:proc:01:1.0"]
-		)
+		self.assertEqual(index["ids_meta"][invoice_id], ["urn:cen.eu:en16931:2017", "urn:proc:01:1.0"])
 
 		mlr_id = "busdox-docid-qns::urn:x::ApplicationResponse##urn:mlr:ver3.0::2.1"
 		self.assertEqual(index["excluded"], [mlr_id])
@@ -103,9 +101,7 @@ class TestBuildIndex(unittest.TestCase):
 	def test_value_without_hashes_is_its_own_customization_id(self):
 		entries = [_entry(value="urn:plain:doctype")]
 		index = self.code_list.build_index(_list(entries))
-		self.assertEqual(
-			index["ids_meta"]["busdox-docid-qns::urn:plain:doctype"][0], "urn:plain:doctype"
-		)
+		self.assertEqual(index["ids_meta"]["busdox-docid-qns::urn:plain:doctype"][0], "urn:plain:doctype")
 
 	def test_entry_without_process_ids_gets_empty_process_id(self):
 		entry = _entry()
@@ -179,6 +175,17 @@ class TestIndexCache(unittest.TestCase):
 			json.dump(_list([_entry(), _entry(value="urn:other")]), fh)
 		self.assertIsNone(self.code_list.read_index(self.raw_path))
 
+	def test_index_missing_derived_key_returns_none(self):
+		"""A parseable but incomplete index must be rebuilt, never applied."""
+		for key in ("doctype_names", "ids_meta", "excluded"):
+			self._write_index()
+			with open(self.code_list.site_index_path(), encoding="utf-8") as fh:
+				index = json.load(fh)
+			del index[key]
+			with open(self.code_list.site_index_path(), "w", encoding="utf-8") as fh:
+				json.dump(index, fh)
+			self.assertIsNone(self.code_list.read_index(self.raw_path), msg=key)
+
 	def test_index_built_for_another_file_returns_none(self):
 		self._write_index()
 		other = os.path.join(self.tmp.name, "other.json")
@@ -227,9 +234,7 @@ class TestStoreCodeList(unittest.TestCase):
 
 	def test_failed_write_restores_previous_bytes_and_drops_index(self):
 		self.code_list._store_code_list(_list(version="9.7"))
-		self.code_list.write_index(
-			self.code_list.site_raw_path(), self.code_list.build_index(_list())
-		)
+		self.code_list.write_index(self.code_list.site_raw_path(), self.code_list.build_index(_list()))
 		with open(self.code_list.site_raw_path(), "rb") as fh:
 			before = fh.read()
 
@@ -298,7 +303,7 @@ class TestLoadDoctypes(unittest.TestCase):
 		self.assertEqual(len(self.lookup._DOCTYPE_NAMES), 1)
 		self.assertNotEqual(bundled_count, 1)
 
-	def test_broken_site_list_does_not_raise(self):
+	def test_broken_site_list_falls_back_to_bundled(self):
 		with open(self.code_list.site_raw_path(), "w", encoding="utf-8") as fh:
 			fh.write("{not json")
 
@@ -306,3 +311,33 @@ class TestLoadDoctypes(unittest.TestCase):
 			self.lookup._load_doctypes()
 
 		mock_frappe.log_error.assert_called_once()
+		# Lookups keep working off the app-bundled copy.
+		self.assertGreater(len(self.lookup._DOCTYPE_NAMES), 1)
+		# The cache now belongs to the bundled copy, not to the unusable site file.
+		self.assertIsNotNone(self.code_list.read_index(self.code_list.bundled_raw_path()))
+		self.assertIsNone(self.code_list.read_index(self.code_list.site_raw_path()))
+
+	def test_broken_site_list_is_not_retried_on_every_lookup(self):
+		with open(self.code_list.site_raw_path(), "w", encoding="utf-8") as fh:
+			fh.write("{not json")
+		self.lookup._load_doctypes()
+
+		with patch.object(self.lookup, "frappe") as mock_frappe:
+			self.lookup._load_doctypes()
+
+		mock_frappe.log_error.assert_not_called()
+
+	def test_poisoned_index_is_rebuilt_not_applied(self):
+		"""A stamped index missing a derived table must not empty the lookup tables."""
+		self.lookup._load_doctypes()
+		with open(self.code_list.site_index_path(), encoding="utf-8") as fh:
+			index = json.load(fh)
+		del index["ids_meta"]
+		with open(self.code_list.site_index_path(), "w", encoding="utf-8") as fh:
+			json.dump(index, fh)
+		self.lookup.invalidate_doctypes()
+
+		self.lookup._load_doctypes()
+
+		self.assertTrue(self.lookup._DOCTYPE_NAMES)
+		self.assertTrue(self.lookup._DOCTYPE_IDS_META)

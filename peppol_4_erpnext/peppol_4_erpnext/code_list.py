@@ -138,6 +138,10 @@ def read_index(raw_path: str) -> dict | None:
 			return None
 		if not isinstance(index.get("doctype_names"), dict):
 			return None
+		if not isinstance(index.get("ids_meta"), dict):
+			return None
+		if not isinstance(index.get("excluded"), list):
+			return None
 		return index
 	except Exception:
 		return None
@@ -227,9 +231,7 @@ def code_list_info() -> dict:
 		"entry_count": entry_count,
 		"source": source,
 		"path": path,
-		"modified": datetime.datetime.fromtimestamp(os.stat(path).st_mtime).strftime(
-			"%Y-%m-%d %H:%M:%S"
-		),
+		"modified": datetime.datetime.fromtimestamp(os.stat(path).st_mtime).strftime("%Y-%m-%d %H:%M:%S"),
 	}
 
 

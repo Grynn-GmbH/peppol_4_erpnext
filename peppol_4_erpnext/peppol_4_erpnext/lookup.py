@@ -39,6 +39,16 @@ def _apply_index(index: dict):
 	_EXCLUDED_DOCTYPE_IDS = set(index["excluded"])
 
 
+def _index_for(raw_path: str) -> dict:
+	"""Cached derived index for `raw_path`, rebuilt and re-cached on a cache miss."""
+	index = code_list.read_index(raw_path)
+	if index is None:
+		with open(raw_path, encoding="utf-8") as fh:
+			index = code_list.build_index(json.load(fh))
+		code_list.write_index(raw_path, index)
+	return index
+
+
 def _load_doctypes():
 	"""Populate the doc type lookup tables from the active code list.
 
@@ -48,19 +58,31 @@ def _load_doctypes():
 	worker without a restart. Never raises: lookups must survive a bad list.
 	"""
 	global _loaded_stamp
+	raw_path = code_list.active_raw_path()
 	try:
-		raw_path = code_list.active_raw_path()
 		stamp = code_list.file_stamp(raw_path)
 		if _loaded_stamp == stamp:
 			return
+	except Exception as exc:
+		frappe.log_error(str(exc), "PEPPOL doctype load error")
+		return
 
-		index = code_list.read_index(raw_path)
-		if index is None:
-			with open(raw_path, encoding="utf-8") as fh:
-				index = code_list.build_index(json.load(fh))
-			code_list.write_index(raw_path, index)
+	try:
+		_apply_index(_index_for(raw_path))
+		_loaded_stamp = stamp
+		return
+	except Exception as exc:
+		frappe.log_error(str(exc), "PEPPOL doctype load error")
 
-		_apply_index(index)
+	if raw_path == code_list.bundled_raw_path():
+		return
+
+	# A bad pushed list must not take lookups down: drop its cache, use the
+	# bundled copy — but stamp the load with the site file, so this is retried
+	# only once, when a later push replaces it.
+	code_list.drop_index()
+	try:
+		_apply_index(_index_for(code_list.bundled_raw_path()))
 		_loaded_stamp = stamp
 	except Exception as exc:
 		frappe.log_error(str(exc), "PEPPOL doctype load error")
