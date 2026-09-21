@@ -342,7 +342,8 @@
 		"label": "Supplier Address Line 1",
 		"insert_after": "peppol_supplier_section",
 		"description": "Supplier address as sent on the inbound PEPPOL invoice",
-		"read_only": 1
+		"read_only": 1,
+		"no_copy": 1
 	},
 	{
 		"doctype": "Custom Field",
@@ -352,7 +353,8 @@
 		"fieldtype": "Data",
 		"label": "Supplier Address Line 2",
 		"insert_after": "supplier_address_line1",
-		"read_only": 1
+		"read_only": 1,
+		"no_copy": 1
 	},
 	{
 		"doctype": "Custom Field",
@@ -362,7 +364,8 @@
 		"fieldtype": "Data",
 		"label": "Supplier City",
 		"insert_after": "supplier_address_line2",
-		"read_only": 1
+		"read_only": 1,
+		"no_copy": 1
 	},
 	{
 		"doctype": "Custom Field",
@@ -372,7 +375,8 @@
 		"fieldtype": "Data",
 		"label": "Supplier State",
 		"insert_after": "supplier_city",
-		"read_only": 1
+		"read_only": 1,
+		"no_copy": 1
 	},
 	{
 		"doctype": "Custom Field",
@@ -390,7 +394,8 @@
 		"fieldtype": "Data",
 		"label": "Supplier Postal Code",
 		"insert_after": "peppol_supplier_column_break",
-		"read_only": 1
+		"read_only": 1,
+		"no_copy": 1
 	},
 	{
 		"doctype": "Custom Field",
@@ -401,7 +406,8 @@
 		"label": "Supplier Country",
 		"insert_after": "supplier_postal_code",
 		"description": "Country as sent on the PEPPOL invoice; free text, not a Country link",
-		"read_only": 1
+		"read_only": 1,
+		"no_copy": 1
 	},
 	{
 		"doctype": "Custom Field",
@@ -412,7 +418,8 @@
 		"label": "Payment Reference",
 		"insert_after": "supplier_country",
 		"description": "Structured creditor reference from the PEPPOL invoice",
-		"read_only": 1
+		"read_only": 1,
+		"no_copy": 1
 	},
 	{
 		"doctype": "Custom Field",
@@ -423,6 +430,7 @@
 		"label": "Delivery Date",
 		"insert_after": "payment_reference",
 		"description": "Delivery date from the PEPPOL invoice",
-		"read_only": 1
+		"read_only": 1,
+		"no_copy": 1
 	}
 ]
