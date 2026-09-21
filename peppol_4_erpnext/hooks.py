@@ -64,10 +64,18 @@ fixtures = [
 				"Company-peppol_id",
 				"Customer-peppol_section",
 				"Customer-peppol_id",
+				"Customer-default_invoice_format",
+				"Customer-invoice_format_id",
+				"Customer-invoice_process_id",
+				"Customer-default_credit_note_format",
+				"Customer-credit_note_format_id",
+				"Customer-credit_note_process_id",
 				"Supplier-peppol_section",
 				"Supplier-peppol_id",
 				"Sales Invoice-peppol_section",
 				"Sales Invoice-send_via_peppol",
+				"Sales Invoice-peppol_document_format",
+				"Sales Invoice-peppol_process_id",
 				"Sales Invoice-peppol_status",
 				"Sales Invoice-peppol_document_name",
 				"Sales Invoice-peppol_column_break",
@@ -121,7 +129,8 @@ fixtures = [
 # Installation
 # ------------
 
-# before_install = "peppol_4_erpnext.install.before_install"
+# Refuses to install on a framework older than v15; warns past v16.
+before_install = "peppol_4_erpnext.install.before_install"
 # after_install = "peppol_4_erpnext.install.after_install"
 
 # Uninstallation

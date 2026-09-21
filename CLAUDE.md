@@ -134,6 +134,8 @@ beside the raw list as `peppol_document_types_index.json` and revalidated with a
 
 ```
 peppol_4_erpnext/
+├── hooks.py                      # App metadata, doctype_js, fixtures, before_install
+├── install.py                    # Frappe/ERPNext version guard (before_install hook)
 ├── peppol_4_erpnext/
 │   ├── api.py                    # Whitelisted API endpoints
 │   ├── lookup.py                 # SMP participant lookup + doc type tables
@@ -171,5 +173,21 @@ These fields are populated by TAPRNext after attempting delivery via the PEPPOL 
 
 ## Dependencies
 
-- frappe >= 15.0
-- erpnext >= 15.0 (required for Company, Customer, Supplier, Sales/Purchase Invoice doctypes)
+- frappe v15 or v16
+- erpnext v15 or v16 (required for Company, Customer, Supplier, Sales/Purchase Invoice doctypes)
+- Python 3.10–3.14 (a v15 bench runs 3.10–3.14, a v16 bench runs 3.14 only)
+- `dnspython >= 2.0` (BDXL/NAPTR resolution in `lookup.py`) and `requests >= 2.28` (SMP queries),
+  declared in `pyproject.toml` and installed by `bench get-app`
+
+### Frappe v15 / v16
+
+A single codebase serves both majors — there is no version branch and no compatibility
+shim. Every framework API the app uses (`frappe.whitelist`, `frappe.only_for`,
+`frappe.throw`, `frappe.log_error`, `frappe.get_site_path`, `frappe.get_app_path`,
+`frappe.db.set_value`, `frappe.db.get_single_value`, and the client-side form APIs) has
+the same signature in v15 and v16; in v16 several of them moved out of `frappe/__init__.py`
+but are re-exported from it. The only real difference is the interpreter, so the code stays
+within Python 3.10 syntax (`target-version = "py310"` in `pyproject.toml`).
+
+`peppol_4_erpnext/install.py` runs as the `before_install` hook: it blocks installation on
+frappe/erpnext older than v15 and warns — without blocking — past v16.
