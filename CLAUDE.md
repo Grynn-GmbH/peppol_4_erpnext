@@ -112,23 +112,43 @@ beside the raw list as `peppol_document_types_index.json` and revalidated with a
 
 ### Custom Fields
 
+There is no `peppol_scheme` field. The scheme travels inside `peppol_id` itself —
+`_normalise_participant_id` in `lookup.py` accepts both `0088:123` and
+`iso6523-actorid-upis::0088:123`.
+
 | DocType | Fields | Purpose |
 |---------|--------|---------|
-| Company | `peppol_id`, `peppol_scheme` | Company's PEPPOL Participant ID (sender/receiver) |
-| Customer | `peppol_id`, `peppol_scheme` | Customer's PEPPOL Participant ID (for outbound invoices) |
-| Supplier | `peppol_id`, `peppol_scheme` | Supplier's PEPPOL Participant ID (for inbound invoices) |
+| Company | `peppol_id` | Company's PEPPOL Participant ID (sender/receiver) |
+| Customer | `peppol_id` | Customer's PEPPOL Participant ID (for outbound invoices) |
+| Customer | `default_invoice_format`, `invoice_format_id`, `invoice_process_id`, `default_credit_note_format`, `credit_note_format_id`, `credit_note_process_id` | Document type routing, populated from the SMP lookup by `customer.js` |
+| Supplier | `peppol_id` | Supplier's PEPPOL Participant ID (for inbound invoices) |
 | Sales Invoice | `send_via_peppol`, `peppol_status`, `peppol_document_name`, `peppol_sent_on`, `peppol_error`, `peppol_mlr_status`, `peppol_mlr_description` | Outbound tracking |
+| Sales Invoice | `peppol_document_format`, `peppol_process_id` | Doc type + process ID copied off the Customer when the invoice is marked; read by TAPRNext |
 | Purchase Invoice | `peppol_reference`, `peppol_sender_id`, `peppol_received_on`, `is_peppol_invoice` | Inbound tracking |
+| Purchase Invoice | `supplier_address_line1`, `supplier_address_line2`, `supplier_city`, `supplier_state`, `supplier_postal_code`, `supplier_country`, `payment_reference`, `schedule_date` | Invoice detail pushed by TAPRNext that stock ERPNext has nowhere to put |
+
+**These names are a wire contract, not an implementation detail.** TAPRNext posts
+Purchase Invoices as a flat dict to `/api/resource/Purchase Invoice`; Frappe's
+`get_valid_dict()` drops any key that is not in the doctype meta, with no error. A
+field renamed or removed here becomes data that silently disappears. `tests/test_contract.py`
+pins the set — the export filter in `hooks.py` must name every field in
+`fixtures/custom_field.json`, or the next `bench export-fixtures` deletes the rest.
 
 ### Sales Invoice PEPPOL Status
 
-| Status | Description |
-|--------|-------------|
-| (empty) | Not marked for PEPPOL |
-| Ready | Marked for pickup by TAPRNext |
-| Sent | Picked up and sent via PEPPOL network |
-| Delivered | Confirmed delivered to recipient |
-| Failed | Delivery failed (see error message) |
+| Status | Set by | Description |
+|--------|--------|-------------|
+| (empty) | — | Not marked for PEPPOL |
+| Ready | This app (`mark_invoice_for_peppol`) | Marked for pickup by TAPRNext |
+| Fetched | TAPRNext | Picked up; `peppol_document_name` now holds the TAPRNext document |
+| Sent | TAPRNext | Sent via PEPPOL network; `peppol_sent_on` set |
+| Delivered | TAPRNext | MLR received from the network; `peppol_mlr_status` set |
+| Failed | TAPRNext | Delivery failed (see `peppol_error`) |
+
+`Ready` is the only status this app sets itself; the other four arrive through
+`api.update_peppol_status`. Marking requires PEPPOL Settings to be enabled — enforced
+both in `can_mark_for_peppol` (for the UI) and in the `Sales Invoice` doc events in
+`sales_invoice.py` (for every other write path, including the REST API).
 
 ### Key Files
 
@@ -140,12 +160,17 @@ peppol_4_erpnext/
 │   ├── api.py                    # Whitelisted API endpoints
 │   ├── lookup.py                 # SMP participant lookup + doc type tables
 │   ├── code_list.py              # Receives the pushed PEPPOL doc type code list
+│   ├── sales_invoice.py          # Doc events: PEPPOL-enabled guard on send_via_peppol
 │   ├── doctype/
 │   │   └── peppol_settings/      # Settings configuration
-│   └── fixtures/
-│       └── custom_field.json     # Custom field definitions
+│   └── tests/
+│       └── test_contract.py      # Pins the endpoints + field names TAPRNext depends on
+├── fixtures/
+│   └── custom_field.json         # Custom field definitions
 └── public/js/
-    └── sales_invoice.js          # "Mark for PEPPOL" button & status display
+    ├── sales_invoice.js          # "Mark for PEPPOL" button & status display
+    ├── customer.js               # Doc type routing from the SMP lookup
+    └── peppol_party.js           # PEPPOL ID validation on Company / Supplier
 ```
 
 ## PEPPOL ID Schemes

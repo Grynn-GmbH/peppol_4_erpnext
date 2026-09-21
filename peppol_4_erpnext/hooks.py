@@ -90,6 +90,16 @@ fixtures = [
 				"Purchase Invoice-peppol_column_break",
 				"Purchase Invoice-peppol_received_on",
 				"Purchase Invoice-is_peppol_invoice",
+				"Purchase Invoice-peppol_supplier_section",
+				"Purchase Invoice-supplier_address_line1",
+				"Purchase Invoice-supplier_address_line2",
+				"Purchase Invoice-supplier_city",
+				"Purchase Invoice-supplier_state",
+				"Purchase Invoice-peppol_supplier_column_break",
+				"Purchase Invoice-supplier_postal_code",
+				"Purchase Invoice-supplier_country",
+				"Purchase Invoice-payment_reference",
+				"Purchase Invoice-schedule_date",
 			]]
 		]
 	}
@@ -185,13 +195,16 @@ before_install = "peppol_4_erpnext.install.before_install"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+_SI_PEPPOL_GUARD = "peppol_4_erpnext.peppol_4_erpnext.sales_invoice.validate_peppol_enabled"
+
+# `send_via_peppol` is allow_on_submit, so the flag can be raised on an already
+# submitted invoice — guard both paths.
+doc_events = {
+	"Sales Invoice": {
+		"validate": _SI_PEPPOL_GUARD,
+		"on_update_after_submit": _SI_PEPPOL_GUARD,
+	}
+}
 
 # Scheduled Tasks
 # ---------------
