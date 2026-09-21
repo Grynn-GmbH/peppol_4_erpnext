@@ -216,3 +216,13 @@ within Python 3.10 syntax (`target-version = "py310"` in `pyproject.toml`).
 
 `peppol_4_erpnext/install.py` runs as the `before_install` hook: it blocks installation on
 frappe/erpnext older than v15 and warns — without blocking — past v16.
+
+### Frappe Cloud
+
+`[tool.bench.frappe-dependencies]` in `pyproject.toml` is **required** by Frappe Cloud, not
+optional. `press/api/github.py` hard-throws when `frappe` is missing from it, so the app
+cannot be added from GitHub at all. Nothing in a local bench needs it, so it is easy to
+delete without noticing — `tests/test_packaging.py` pins it, along with the other gates
+press checks (root `pyproject.toml`; a top-level directory holding both `hooks.py` and
+`patches.txt`; a parseable `app_title`). Keep the upper bound in step with
+`MAX_TESTED_MAJOR` in `install.py`; the test asserts they agree.

@@ -53,6 +53,16 @@ dev = [
 requires = ["flit_core >=3.4,<4"]
 build-backend = "flit_core.buildapi"
 
+# Frappe Cloud REQUIRES this section: press/api/github.py hard-throws
+# ("Could not find a compatible Frappe version in pyproject.toml") when
+# tool.bench.frappe-dependencies.frappe is absent, so the app cannot be added
+# from GitHub without it. bench also reads it to warn on a mismatched bench.
+# Values are semantic_version SimpleSpec strings, matching what hrms does.
+# Keep the upper bound in step with MAX_TESTED_MAJOR in install.py.
+[tool.bench.frappe-dependencies]
+frappe = ">=15.0.0,<17.0.0"
+erpnext = ">=15.0.0,<17.0.0"
+
 # These dependencies are only installed when developer mode is enabled
 [tool.bench.dev-dependencies]
 # package_name = "~=1.1.0"
