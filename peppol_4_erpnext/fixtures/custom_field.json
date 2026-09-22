@@ -280,6 +280,7 @@
 		"label": "PEPPOL Reference",
 		"insert_after": "peppol_section",
 		"read_only": 1,
+		"no_copy": 1,
 		"description": "Original invoice reference from PEPPOL network"
 	},
 	{
@@ -291,6 +292,7 @@
 		"label": "Sender PEPPOL ID",
 		"insert_after": "peppol_reference",
 		"read_only": 1,
+		"no_copy": 1,
 		"description": "PEPPOL Participant ID of the sender"
 	},
 	{
@@ -310,6 +312,7 @@
 		"label": "Received On",
 		"insert_after": "peppol_column_break",
 		"read_only": 1,
+		"no_copy": 1,
 		"description": "When the invoice was received via PEPPOL"
 	},
 	{
@@ -321,6 +324,7 @@
 		"label": "Is PEPPOL Invoice",
 		"insert_after": "peppol_received_on",
 		"read_only": 1,
+		"no_copy": 1,
 		"description": "Indicates this invoice was received via PEPPOL"
 	},
 	{
