@@ -3,6 +3,11 @@ from frappe import _
 
 from peppol_4_erpnext.peppol_4_erpnext.lookup import smp_participant_lookup
 
+# Accepted alongside System Manager so a site can provision the tapr_next
+# integration user with a role scoped to this callback, instead of full
+# System Manager. See issue #14.
+STATUS_CALLBACK_ROLES = ("System Manager", "PEPPOL Integration")
+
 
 @frappe.whitelist()
 def lookup_peppol_participant(participant_id, validate_only=False):
@@ -139,6 +144,8 @@ def update_peppol_status(
 	Returns:
 	    dict: success and status
 	"""
+	frappe.only_for(STATUS_CALLBACK_ROLES)
+
 	allowed_statuses = ("Fetched", "Sent", "Delivered", "Failed")
 	if status not in allowed_statuses:
 		frappe.throw(

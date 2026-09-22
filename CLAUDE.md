@@ -96,7 +96,7 @@ POST /api/method/peppol_4_erpnext.peppol_4_erpnext.code_list.update_peppol_code_
 GET  /api/method/peppol_4_erpnext.peppol_4_erpnext.code_list.get_peppol_code_list_info
 ```
 
-Both require the **System Manager** role. The pushed list is validated, then stored at
+Both require the **System Manager** or **PEPPOL Integration** role. The pushed list is validated, then stored at
 `<site>/private/files/peppol_4_erpnext/peppol_document_types.json`; the app-bundled copy is
 the fallback for sites that were never pushed to. The sender is authoritative — the list is
 always replaced, so a rollback to an older version works. The derived lookup tables are cached

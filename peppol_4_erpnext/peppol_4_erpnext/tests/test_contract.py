@@ -138,6 +138,23 @@ class TestWhitelistedEndpointContract(unittest.TestCase):
 			with self.assertRaises(RuntimeError):
 				api.update_peppol_status("SINV-1", "Bogus")
 
+	def test_status_callback_requires_a_role(self):
+		"""update_peppol_status must gate access like the code list endpoints already do.
+
+		tapr_next's single api_key/api_secret must already hold one of these roles for
+		the code list push to work, so this is a no-op for a correctly configured
+		integration. A site provisioned with a narrower role for this callback alone
+		needs "PEPPOL Integration" granted explicitly. See issue #14.
+		"""
+		from peppol_4_erpnext.peppol_4_erpnext import api
+
+		with patch.object(api, "frappe") as mock_frappe:
+			mock_frappe.only_for.side_effect = RuntimeError("blocked")
+			with self.assertRaises(RuntimeError):
+				api.update_peppol_status("SINV-1", "Sent")
+
+		mock_frappe.only_for.assert_called_once_with(api.STATUS_CALLBACK_ROLES)
+
 	def test_code_list_info_reply_keys(self):
 		"""tapr_next skips a redundant push by reading `version` off this reply."""
 		from peppol_4_erpnext.peppol_4_erpnext import code_list
@@ -151,6 +168,42 @@ class TestWhitelistedEndpointContract(unittest.TestCase):
 		self.assertEqual(set(info), CODE_LIST_INFO_KEYS)
 		self.assertTrue(info["version"])
 		self.assertEqual(info["source"], "app")
+
+	def test_code_list_endpoints_accept_the_same_roles_as_the_status_callback(self):
+		"""The three endpoints must not drift apart on who is allowed to call them."""
+		from peppol_4_erpnext.peppol_4_erpnext import api, code_list
+
+		with patch.object(code_list, "frappe") as mock_frappe:
+			mock_frappe.only_for.side_effect = RuntimeError("blocked")
+			with self.assertRaises(RuntimeError):
+				code_list.get_peppol_code_list_info()
+		mock_frappe.only_for.assert_called_once_with(code_list.CODE_LIST_ROLES)
+
+		with patch.object(code_list, "frappe") as mock_frappe:
+			mock_frappe.only_for.side_effect = RuntimeError("blocked")
+			with self.assertRaises(RuntimeError):
+				code_list.update_peppol_code_list(code_list={"values": []})
+		mock_frappe.only_for.assert_called_once_with(code_list.CODE_LIST_ROLES)
+
+		self.assertEqual(set(code_list.CODE_LIST_ROLES), set(api.STATUS_CALLBACK_ROLES))
+		self.assertIn("System Manager", code_list.CODE_LIST_ROLES)
+		self.assertIn("PEPPOL Integration", code_list.CODE_LIST_ROLES)
+
+	def test_integration_role_is_defined_and_exported(self):
+		"""A role every endpoint checks for but that no fixture ships is useless."""
+		import peppol_4_erpnext
+		from peppol_4_erpnext import hooks
+		from peppol_4_erpnext.peppol_4_erpnext import api
+
+		path = os.path.join(os.path.dirname(peppol_4_erpnext.__file__), "fixtures", "role.json")
+		with open(path, encoding="utf-8") as fh:
+			roles = {r["name"] for r in json.load(fh)}
+
+		self.assertIn("PEPPOL Integration", roles)
+
+		role_fixture = next(f for f in hooks.fixtures if f["doctype"] == "Role")
+		self.assertEqual(set(role_fixture["filters"][0][2]), roles)
+		self.assertIn("PEPPOL Integration", api.STATUS_CALLBACK_ROLES)
 
 
 # ── Custom Fields ─────────────────────────────────────────────────────────────
