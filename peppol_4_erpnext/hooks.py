@@ -102,6 +102,12 @@ fixtures = [
 				"Purchase Invoice-schedule_date",
 			]]
 		]
+	},
+	{
+		"doctype": "Role",
+		"filters": [
+			["name", "in", ["PEPPOL Integration"]]
+		]
 	}
 ]
 

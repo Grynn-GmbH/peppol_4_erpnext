@@ -26,6 +26,11 @@ EXCLUDED_CATEGORIES = {"Application Response", "Message Level Response"}
 
 _REQUIRED_ENTRY_KEYS = ("scheme", "value", "name", "category", "state")
 
+# Accepted alongside System Manager, so a site can provision the tapr_next
+# integration user with a role scoped to these two endpoints instead of full
+# System Manager. See issue #14.
+CODE_LIST_ROLES = ("System Manager", "PEPPOL Integration")
+
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 
@@ -246,7 +251,7 @@ def update_peppol_code_list(code_list=None):
 	carries, so a deliberate rollback to an older list works. tapr_next uses
 	`get_peppol_code_list_info` to skip a redundant push.
 	"""
-	frappe.only_for("System Manager")
+	frappe.only_for(CODE_LIST_ROLES)
 
 	if isinstance(code_list, str):
 		try:
@@ -275,5 +280,5 @@ def update_peppol_code_list(code_list=None):
 @frappe.whitelist(allow_guest=False, methods=["GET"])
 def get_peppol_code_list_info():
 	"""Report the code list currently in use, so a redundant push can be skipped."""
-	frappe.only_for("System Manager")
+	frappe.only_for(CODE_LIST_ROLES)
 	return code_list_info()
