@@ -112,38 +112,65 @@ beside the raw list as `peppol_document_types_index.json` and revalidated with a
 
 ### Custom Fields
 
+There is no `peppol_scheme` field. The scheme travels inside `peppol_id` itself —
+`_normalise_participant_id` in `lookup.py` accepts both `0088:123` and
+`iso6523-actorid-upis::0088:123`.
+
 | DocType | Fields | Purpose |
 |---------|--------|---------|
-| Company | `peppol_id`, `peppol_scheme` | Company's PEPPOL Participant ID (sender/receiver) |
-| Customer | `peppol_id`, `peppol_scheme` | Customer's PEPPOL Participant ID (for outbound invoices) |
-| Supplier | `peppol_id`, `peppol_scheme` | Supplier's PEPPOL Participant ID (for inbound invoices) |
+| Company | `peppol_id` | Company's PEPPOL Participant ID (sender/receiver) |
+| Customer | `peppol_id` | Customer's PEPPOL Participant ID (for outbound invoices) |
+| Customer | `default_invoice_format`, `invoice_format_id`, `invoice_process_id`, `default_credit_note_format`, `credit_note_format_id`, `credit_note_process_id` | Document type routing, populated from the SMP lookup by `customer.js` |
+| Supplier | `peppol_id` | Supplier's PEPPOL Participant ID (for inbound invoices) |
 | Sales Invoice | `send_via_peppol`, `peppol_status`, `peppol_document_name`, `peppol_sent_on`, `peppol_error`, `peppol_mlr_status`, `peppol_mlr_description` | Outbound tracking |
+| Sales Invoice | `peppol_document_format`, `peppol_process_id` | Doc type + process ID copied off the Customer when the invoice is marked; read by TAPRNext |
 | Purchase Invoice | `peppol_reference`, `peppol_sender_id`, `peppol_received_on`, `is_peppol_invoice` | Inbound tracking |
+| Purchase Invoice | `supplier_address_line1`, `supplier_address_line2`, `supplier_city`, `supplier_state`, `supplier_postal_code`, `supplier_country`, `payment_reference`, `schedule_date` | Invoice detail pushed by TAPRNext that stock ERPNext has nowhere to put |
+
+**These names are a wire contract, not an implementation detail.** TAPRNext posts
+Purchase Invoices as a flat dict to `/api/resource/Purchase Invoice`; Frappe's
+`get_valid_dict()` drops any key that is not in the doctype meta, with no error. A
+field renamed or removed here becomes data that silently disappears. `tests/test_contract.py`
+pins the set — the export filter in `hooks.py` must name every field in
+`fixtures/custom_field.json`, or the next `bench export-fixtures` deletes the rest.
 
 ### Sales Invoice PEPPOL Status
 
-| Status | Description |
-|--------|-------------|
-| (empty) | Not marked for PEPPOL |
-| Ready | Marked for pickup by TAPRNext |
-| Sent | Picked up and sent via PEPPOL network |
-| Delivered | Confirmed delivered to recipient |
-| Failed | Delivery failed (see error message) |
+| Status | Set by | Description |
+|--------|--------|-------------|
+| (empty) | — | Not marked for PEPPOL |
+| Ready | This app (`mark_invoice_for_peppol`) | Marked for pickup by TAPRNext |
+| Fetched | TAPRNext | Picked up; `peppol_document_name` now holds the TAPRNext document |
+| Sent | TAPRNext | Sent via PEPPOL network; `peppol_sent_on` set |
+| Delivered | TAPRNext | MLR received from the network; `peppol_mlr_status` set |
+| Failed | TAPRNext | Delivery failed (see `peppol_error`) |
+
+`Ready` is the only status this app sets itself; the other four arrive through
+`api.update_peppol_status`. Marking requires PEPPOL Settings to be enabled — enforced
+both in `can_mark_for_peppol` (for the UI) and in the `Sales Invoice` doc events in
+`sales_invoice.py` (for every other write path, including the REST API).
 
 ### Key Files
 
 ```
 peppol_4_erpnext/
+├── hooks.py                      # App metadata, doctype_js, fixtures, before_install
+├── install.py                    # Frappe/ERPNext version guard (before_install hook)
 ├── peppol_4_erpnext/
 │   ├── api.py                    # Whitelisted API endpoints
 │   ├── lookup.py                 # SMP participant lookup + doc type tables
 │   ├── code_list.py              # Receives the pushed PEPPOL doc type code list
+│   ├── sales_invoice.py          # Doc events: PEPPOL-enabled guard on send_via_peppol
 │   ├── doctype/
 │   │   └── peppol_settings/      # Settings configuration
-│   └── fixtures/
-│       └── custom_field.json     # Custom field definitions
+│   └── tests/
+│       └── test_contract.py      # Pins the endpoints + field names TAPRNext depends on
+├── fixtures/
+│   └── custom_field.json         # Custom field definitions
 └── public/js/
-    └── sales_invoice.js          # "Mark for PEPPOL" button & status display
+    ├── sales_invoice.js          # "Mark for PEPPOL" button & status display
+    ├── customer.js               # Doc type routing from the SMP lookup
+    └── peppol_party.js           # PEPPOL ID validation on Company / Supplier
 ```
 
 ## PEPPOL ID Schemes
@@ -171,5 +198,31 @@ These fields are populated by TAPRNext after attempting delivery via the PEPPOL 
 
 ## Dependencies
 
-- frappe >= 15.0
-- erpnext >= 15.0 (required for Company, Customer, Supplier, Sales/Purchase Invoice doctypes)
+- frappe v15 or v16
+- erpnext v15 or v16 (required for Company, Customer, Supplier, Sales/Purchase Invoice doctypes)
+- Python 3.10–3.14 (a v15 bench runs 3.10–3.14, a v16 bench runs 3.14 only)
+- `dnspython >= 2.0` (BDXL/NAPTR resolution in `lookup.py`) and `requests >= 2.28` (SMP queries),
+  declared in `pyproject.toml` and installed by `bench get-app`
+
+### Frappe v15 / v16
+
+A single codebase serves both majors — there is no version branch and no compatibility
+shim. Every framework API the app uses (`frappe.whitelist`, `frappe.only_for`,
+`frappe.throw`, `frappe.log_error`, `frappe.get_site_path`, `frappe.get_app_path`,
+`frappe.db.set_value`, `frappe.db.get_single_value`, and the client-side form APIs) has
+the same signature in v15 and v16; in v16 several of them moved out of `frappe/__init__.py`
+but are re-exported from it. The only real difference is the interpreter, so the code stays
+within Python 3.10 syntax (`target-version = "py310"` in `pyproject.toml`).
+
+`peppol_4_erpnext/install.py` runs as the `before_install` hook: it blocks installation on
+frappe/erpnext older than v15 and warns — without blocking — past v16.
+
+### Frappe Cloud
+
+`[tool.bench.frappe-dependencies]` in `pyproject.toml` is **required** by Frappe Cloud, not
+optional. `press/api/github.py` hard-throws when `frappe` is missing from it, so the app
+cannot be added from GitHub at all. Nothing in a local bench needs it, so it is easy to
+delete without noticing — `tests/test_packaging.py` pins it, along with the other gates
+press checks (root `pyproject.toml`; a top-level directory holding both `hooks.py` and
+`patches.txt`; a parseable `app_title`). Keep the upper bound in step with
+`MAX_TESTED_MAJOR` in `install.py`; the test asserts they agree.

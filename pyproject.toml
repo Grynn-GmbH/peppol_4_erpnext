@@ -4,18 +4,64 @@ authors = [
     { name = "Grynn GmbH", email = "deepak.pai@grynn.ch"}
 ]
 description = "ERPNext client for sending and receiving e-invoices"
-requires-python = ">=3.10"
 readme = "README.md"
+license = { file = "license.txt" }
+keywords = ["frappe", "erpnext", "peppol", "e-invoicing", "tapr"]
 dynamic = ["version"]
+
+# Frappe v15 runs on Python 3.10-3.14, Frappe v16 on 3.14 only. Keep the floor at
+# 3.10 so a v15 bench can install this app, and do not cap the ceiling: an upper
+# bound here would block installation on a future bench for no benefit.
+requires-python = ">=3.10"
+
+# frappe and erpnext are deliberately NOT listed: bench installs and pins them,
+# and naming them here would make pip try to resolve them from PyPI over the
+# bench's own checkouts. The supported range is declared in hooks.py instead.
 dependencies = [
-    # "frappe~=15.0.0" # Installed and managed by bench.
+    # NAPTR/BDXL resolution in lookup.py needs Resolver.resolve(), dnspython 2.0+.
     "dnspython>=2.0.0",
+    # SMP queries. Lower bound only: frappe 16 pins requests~=2.33.0 and an upper
+    # bound here would conflict with it.
     "requests>=2.28.0",
+]
+
+classifiers = [
+    "Framework :: Frappe",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Office/Business :: Financial :: Accounting",
+]
+
+[project.urls]
+Homepage = "https://github.com/Grynn-GmbH/peppol_4_erpnext"
+Repository = "https://github.com/Grynn-GmbH/peppol_4_erpnext"
+Issues = "https://github.com/Grynn-GmbH/peppol_4_erpnext/issues"
+
+[project.optional-dependencies]
+# pip install -e ".[dev]" inside the bench venv.
+dev = [
+    "ruff>=0.8.1",
+    "pre-commit>=3.7",
 ]
 
 [build-system]
 requires = ["flit_core >=3.4,<4"]
 build-backend = "flit_core.buildapi"
+
+# Frappe Cloud REQUIRES this section: press/api/github.py hard-throws
+# ("Could not find a compatible Frappe version in pyproject.toml") when
+# tool.bench.frappe-dependencies.frappe is absent, so the app cannot be added
+# from GitHub without it. bench also reads it to warn on a mismatched bench.
+# Values are semantic_version SimpleSpec strings, matching what hrms does.
+# Keep the upper bound in step with MAX_TESTED_MAJOR in install.py.
+[tool.bench.frappe-dependencies]
+frappe = ">=15.0.0,<17.0.0"
+erpnext = ">=15.0.0,<17.0.0"
 
 # These dependencies are only installed when developer mode is enabled
 [tool.bench.dev-dependencies]
@@ -23,6 +69,8 @@ build-backend = "flit_core.buildapi"
 
 [tool.ruff]
 line-length = 110
+# Oldest interpreter the app supports (a Frappe 15 bench); keeps the syntax
+# usable on both a v15 and a v16 (Python 3.14) bench.
 target-version = "py310"
 
 [tool.ruff.lint]

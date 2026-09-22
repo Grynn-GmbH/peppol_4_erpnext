@@ -322,5 +322,115 @@
 		"insert_after": "peppol_received_on",
 		"read_only": 1,
 		"description": "Indicates this invoice was received via PEPPOL"
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Purchase Invoice-peppol_supplier_section",
+		"dt": "Purchase Invoice",
+		"fieldname": "peppol_supplier_section",
+		"fieldtype": "Section Break",
+		"label": "PEPPOL Invoice Details",
+		"insert_after": "is_peppol_invoice",
+		"collapsible": 1
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Purchase Invoice-supplier_address_line1",
+		"dt": "Purchase Invoice",
+		"fieldname": "supplier_address_line1",
+		"fieldtype": "Data",
+		"label": "Supplier Address Line 1",
+		"insert_after": "peppol_supplier_section",
+		"description": "Supplier address as sent on the inbound PEPPOL invoice",
+		"read_only": 1,
+		"no_copy": 1
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Purchase Invoice-supplier_address_line2",
+		"dt": "Purchase Invoice",
+		"fieldname": "supplier_address_line2",
+		"fieldtype": "Data",
+		"label": "Supplier Address Line 2",
+		"insert_after": "supplier_address_line1",
+		"read_only": 1,
+		"no_copy": 1
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Purchase Invoice-supplier_city",
+		"dt": "Purchase Invoice",
+		"fieldname": "supplier_city",
+		"fieldtype": "Data",
+		"label": "Supplier City",
+		"insert_after": "supplier_address_line2",
+		"read_only": 1,
+		"no_copy": 1
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Purchase Invoice-supplier_state",
+		"dt": "Purchase Invoice",
+		"fieldname": "supplier_state",
+		"fieldtype": "Data",
+		"label": "Supplier State",
+		"insert_after": "supplier_city",
+		"read_only": 1,
+		"no_copy": 1
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Purchase Invoice-peppol_supplier_column_break",
+		"dt": "Purchase Invoice",
+		"fieldname": "peppol_supplier_column_break",
+		"fieldtype": "Column Break",
+		"insert_after": "supplier_state"
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Purchase Invoice-supplier_postal_code",
+		"dt": "Purchase Invoice",
+		"fieldname": "supplier_postal_code",
+		"fieldtype": "Data",
+		"label": "Supplier Postal Code",
+		"insert_after": "peppol_supplier_column_break",
+		"read_only": 1,
+		"no_copy": 1
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Purchase Invoice-supplier_country",
+		"dt": "Purchase Invoice",
+		"fieldname": "supplier_country",
+		"fieldtype": "Data",
+		"label": "Supplier Country",
+		"insert_after": "supplier_postal_code",
+		"description": "Country as sent on the PEPPOL invoice; free text, not a Country link",
+		"read_only": 1,
+		"no_copy": 1
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Purchase Invoice-payment_reference",
+		"dt": "Purchase Invoice",
+		"fieldname": "payment_reference",
+		"fieldtype": "Data",
+		"label": "Payment Reference",
+		"insert_after": "supplier_country",
+		"description": "Structured creditor reference from the PEPPOL invoice",
+		"read_only": 1,
+		"no_copy": 1
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Purchase Invoice-schedule_date",
+		"dt": "Purchase Invoice",
+		"fieldname": "schedule_date",
+		"fieldtype": "Date",
+		"label": "Delivery Date",
+		"insert_after": "payment_reference",
+		"description": "Delivery date from the PEPPOL invoice",
+		"read_only": 1,
+		"no_copy": 1
 	}
 ]

@@ -5,6 +5,21 @@ ERPNext client for sending and receiving e-invoices via TAPR.ch.
 Sign up here: https://cloud.tapr.ch/dashboard/create-site/inflow/setup
 
 
+### Compatibility
+
+| | Supported |
+|---|---|
+| Frappe | v15, v16 |
+| ERPNext | v15, v16 |
+| Python | 3.10 – 3.14 (a v15 bench runs 3.10–3.14, a v16 bench runs 3.14) |
+
+One codebase covers both framework versions — there is no v15/v16 branch. `bench
+install-app` refuses to install on anything older than v15 and prints a warning
+(but still installs) on anything newer than v16.
+
+Runtime dependencies beyond the framework are `dnspython` (BDXL/NAPTR resolution)
+and `requests` (SMP queries); `bench get-app` installs them from `pyproject.toml`.
+
 ### Installation
 
 You can install this app using the [bench](https://github.com/frappe/bench) CLI:
