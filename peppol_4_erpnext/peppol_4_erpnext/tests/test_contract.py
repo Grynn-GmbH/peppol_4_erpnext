@@ -226,3 +226,16 @@ class TestCustomFieldContract(unittest.TestCase):
 
 		listed = set(hooks.fixtures[0]["filters"][0][2])
 		self.assertEqual(listed, {f["name"] for f in self.fields})
+
+	def test_provenance_fields_are_no_copy(self):
+		"""Duplicating or amending an invoice must not carry over network provenance.
+
+		A copied peppol_reference in particular would claim to be a PEPPOL instance ID
+		that was never transmitted. See issue #18.
+		"""
+		skip_fieldtypes = {"Section Break", "Column Break"}
+		for f in self.fields:
+			if f["dt"] not in ("Sales Invoice", "Purchase Invoice") or f["fieldtype"] in skip_fieldtypes:
+				continue
+			with self.subTest(dt=f["dt"], fieldname=f["fieldname"]):
+				self.assertEqual(f.get("no_copy"), 1)
